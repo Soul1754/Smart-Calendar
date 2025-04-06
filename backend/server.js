@@ -1,8 +1,8 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const passport = require('passport');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const mongoose = require("mongoose");
+const passport = require("passport");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
 // Load environment variables
 dotenv.config();
@@ -15,19 +15,24 @@ app.use(express.json());
 app.use(cors());
 app.use(passport.initialize());
 
+// Configure Passport
+require("./config/passport");
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes (to be implemented)
-app.use('/auth', require('./routes/auth'));
-app.use('/calendar', require('./routes/calendar'));
+app.use("/auth", require("./routes/auth"));
+app.use("/calendar", require("./routes/calendar"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+  console.error("ERROR DETAILS:", err);
+  console.error("ERROR STACK:", err.stack);
+  res.status(500).send("Something broke!");
 });
 
 // Start server
