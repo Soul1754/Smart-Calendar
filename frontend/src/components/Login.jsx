@@ -15,12 +15,14 @@ const Login = () => {
   const { login } = useContext(AuthContext);
 
   // Check if user is already logged in
+  const { isAuthenticated, loading } = useContext(AuthContext);
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/");
+    // Only redirect if we're authenticated and not in a loading state
+    if (isAuthenticated && !loading) {
+      navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated, loading]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,7 +44,7 @@ const Login = () => {
       login(data.token, data.user);
 
       // Redirect to home page
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
       setError(
         error.response?.data?.message || "Login failed. Please try again."
@@ -54,7 +56,7 @@ const Login = () => {
 
   const handleOAuthLogin = (provider) => {
     // Redirect to backend OAuth route
-    window.location.href = `http://localhost:5001/auth/${provider.toLowerCase()}`;
+    window.location.href = `http://localhost:5000/auth/${provider.toLowerCase()}`;
   };
 
   return (

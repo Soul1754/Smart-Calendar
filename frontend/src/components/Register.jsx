@@ -17,12 +17,14 @@ const Register = () => {
   const { login } = useContext(AuthContext);
 
   // Check if user is already logged in
+  const { isAuthenticated, loading } = useContext(AuthContext);
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/");
+    // Only redirect if we're authenticated and not in a loading state
+    if (isAuthenticated && !loading) {
+      navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated, loading]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

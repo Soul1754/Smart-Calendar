@@ -17,6 +17,7 @@ import NewMeeting from "./components/NewMeeting";
 import Profile from "./components/Profile";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import RequireAuth from "./components/RequireAuth";
 
 // Create auth context
 export const AuthContext = createContext();
@@ -105,17 +106,7 @@ function App() {
     return null;
   };
 
-  // RequireAuth component to protect routes
-  const RequireAuth = ({ children }) => {
-    const { isAuthenticated } = React.useContext(AuthContext);
-    const location = useLocation();
-
-    if (!isAuthenticated) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
-
-    return children;
-  };
+  // Using the imported RequireAuth component from above
 
   return (
     <AuthProvider>
