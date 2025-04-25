@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import { format } from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
+import { calendarService } from "../services/api";
+import { toast } from "react-toastify";
 
 const NewMeeting = () => {
   const [meetingData, setMeetingData] = useState({
@@ -69,15 +71,47 @@ const NewMeeting = () => {
     }, 1500);
   };
 
-  const handleScheduleMeeting = (timeSlot) => {
-    // In a real application, this would make an API call to schedule the meeting
-    // and add it to all attendees' calendars
-    alert(
-      `Meeting "${meetingData.title}" scheduled for ${format(
-        meetingData.date,
-        "MMMM d, yyyy"
-      )} at ${timeSlot.startTime}`
-    );
+  const handleScheduleMeeting = async (timeSlot) => {
+    try {
+      setIsLoading(true);
+
+      // Convert timeSlot string to ISO format
+      const dateStr = format(meetingData.date, "yyyy-MM-dd");
+      const startDateTime = new Date(`${dateStr} ${timeSlot.startTime}`);
+      const endDateTime = new Date(`${dateStr} ${timeSlot.endTime}`);
+
+      // Prepare event data for Google Calendar
+      const eventData = {
+        summary: meetingData.title,
+        description: meetingData.description,
+        start: startDateTime.toISOString(),
+        end: endDateTime.toISOString(),
+        attendees: meetingData.attendees,
+      };
+
+      // Call the API to create the event
+      const response = await calendarService.createGoogleEvent(eventData);
+
+      // Show success message
+      toast.success(`Meeting "${meetingData.title}" scheduled successfully!`);
+
+      // Reset form or redirect as needed
+      setSuggestedTimeSlots([]);
+      setMeetingData({
+        title: "",
+        description: "",
+        date: new Date(),
+        startTime: "",
+        endTime: "",
+        duration: 30,
+        attendees: [],
+      });
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+      toast.error("Failed to schedule meeting. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -235,7 +269,7 @@ const NewMeeting = () => {
               {suggestedTimeSlots.map((slot, index) => (
                 <div
                   key={index}
-                  className="border rounded-md p-4 hover:shadow-md transition duration-200"
+                  className="border rounded-md p-4 hover:shadow-md hover:border-blue-500 transition duration-200"
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">
@@ -247,9 +281,36 @@ const NewMeeting = () => {
                   </div>
                   <button
                     onClick={() => handleScheduleMeeting(slot)}
-                    className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200"
+                    className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex justify-center items-center"
+                    disabled={isLoading}
                   >
-                    Schedule
+                    {isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Creating...
+                      </>
+                    ) : (
+                      "Schedule"
+                    )}
                   </button>
                 </div>
               ))}

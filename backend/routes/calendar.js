@@ -72,20 +72,6 @@ router.get("/google/events", auth, async (req, res) => {
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    // Set up token refresh handler
-    oauth2Client.on("tokens", async (tokens) => {
-      if (tokens.refresh_token) {
-        // Store the new refresh token
-        user.googleRefreshToken = tokens.refresh_token;
-      }
-      // Always update the access token
-      if (tokens.access_token) {
-        user.googleAccessToken = tokens.access_token;
-        await user.save();
-        console.log("Google tokens refreshed and saved to user account");
-      }
-    });
-
     // Get events from primary calendar
     const { timeMin, timeMax } = req.query;
     const response = await calendar.events.list({
