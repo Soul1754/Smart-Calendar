@@ -24,9 +24,10 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Routes (to be implemented)
+// Routes
 app.use("/auth", require("./routes/auth"));
-app.use("/calendar", require("./routes/calendar"));
+app.use("/api/calendar", require("./routes/calendar"));
+app.use("/api/chatbot", require("./routes/chatbot"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -36,7 +37,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

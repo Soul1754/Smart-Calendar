@@ -63,25 +63,37 @@ export const authService = {
 export const calendarService = {
   // Get Google Calendar events
   getGoogleEvents: async () => {
-    const response = await api.get("/calendar/google/events");
+    const response = await api.get("/api/calendar/google/events");
     return response.data;
   },
 
   // Get Microsoft Calendar events
   getMicrosoftEvents: async () => {
-    const response = await api.get("/calendar/microsoft/events");
+    const response = await api.get("/api/calendar/microsoft/events");
     return response.data;
   },
 
   // Create Google Calendar event
   createGoogleEvent: async (eventData) => {
-    const response = await api.post("/calendar/google/events", eventData);
+    const response = await api.post("/api/calendar/google/events", eventData);
     return response.data;
   },
 
   // Create Microsoft Calendar event
   createMicrosoftEvent: async (eventData) => {
-    const response = await api.post("/calendar/microsoft/events", eventData);
+    const response = await api.post(
+      "/api/calendar/microsoft/events",
+      eventData
+    );
+    return response.data;
+  },
+};
+
+// Chatbot service
+export const chatbotService = {
+  // Send message to chatbot
+  sendMessage: async (message) => {
+    const response = await api.post("/api/chatbot/message", { message });
     return response.data;
   },
 };

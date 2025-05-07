@@ -15,6 +15,7 @@ import Calendar from "./components/Calendar";
 import Meetings from "./components/Meetings";
 import NewMeeting from "./components/NewMeeting";
 import Profile from "./components/Profile";
+import Chatbot from "./components/Chatbot";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import RequireAuth from "./components/RequireAuth";
@@ -130,6 +131,7 @@ function App() {
             <Route path="calendar" element={<Calendar />} />
             <Route path="meetings" element={<Meetings />} />
             <Route path="meetings/new" element={<NewMeeting />} />
+            <Route path="chatbot" element={<Chatbot />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>

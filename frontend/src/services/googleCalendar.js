@@ -5,7 +5,7 @@ const googleCalendarService = {
   // Get all events from Google Calendar
   getEvents: async (params = {}) => {
     try {
-      const response = await api.get("/calendar/google/events", { params });
+      const response = await api.get("/api/calendar/google/events", { params });
       return response.data.events;
     } catch (error) {
       console.error("Error fetching Google Calendar events:", error);
@@ -20,7 +20,7 @@ const googleCalendarService = {
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
       };
-      const response = await api.get("/calendar/google/events", { params });
+      const response = await api.get("/api/calendar/google/events", { params });
       return response.data.events;
     } catch (error) {
       console.error(
@@ -34,7 +34,7 @@ const googleCalendarService = {
   // Create a new event in Google Calendar
   createEvent: async (eventData) => {
     try {
-      const response = await api.post("/calendar/google/events", eventData);
+      const response = await api.post("/api/calendar/google/events", eventData);
       return response.data;
     } catch (error) {
       console.error("Error creating Google Calendar event:", error);
@@ -46,7 +46,7 @@ const googleCalendarService = {
   updateEvent: async (eventId, eventData) => {
     try {
       const response = await api.put(
-        `/calendar/google/events/${eventId}`,
+        `/api/calendar/google/events/${eventId}`,
         eventData
       );
       return response.data;
@@ -59,7 +59,9 @@ const googleCalendarService = {
   // Delete an event from Google Calendar
   deleteEvent: async (eventId) => {
     try {
-      const response = await api.delete(`/calendar/google/events/${eventId}`);
+      const response = await api.delete(
+        `/api/calendar/google/events/${eventId}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error deleting Google Calendar event:", error);

@@ -56,7 +56,7 @@ const Login = () => {
 
   const handleOAuthLogin = (provider) => {
     // Redirect to backend OAuth route
-    window.location.href = `http://localhost:5000/auth/${provider.toLowerCase()}`;
+    window.location.href = `http://localhost:5001/auth/${provider.toLowerCase()}`;
   };
 
   return (
