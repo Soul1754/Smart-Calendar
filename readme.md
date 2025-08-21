@@ -1,4 +1,4 @@
-# Smart Calendar App
+`# Smart Calendar App
 
 ## Overview
 The **Smart Calendar App** is an AI-powered scheduling assistant that automatically finds the best time slots for meetings by analyzing calendar availability across multiple participants. It integrates with **Google Calendar** and **Microsoft Outlook Calendar** using OAuth 2.0 authentication.
