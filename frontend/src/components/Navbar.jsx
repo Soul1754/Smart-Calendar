@@ -21,22 +21,22 @@ const Navbar = () => {
           Smart Calendar
         </Link>
         <ul className="flex space-x-6">
-          <li>
-            <Link
-              to="/"
-              className="hover:text-blue-200 transition duration-200"
-            >
-              Home
-            </Link>
-          </li>
           {isAuthenticated ? (
             <>
               <li>
                 <Link
-                  to="/dashboard"
+                  to="/calendar"
                   className="hover:text-blue-200 transition duration-200"
                 >
-                  Dashboard
+                  Calendar
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/meetings/new"
+                  className="hover:text-blue-200 transition duration-200"
+                >
+                  New Meeting
                 </Link>
               </li>
               <li>

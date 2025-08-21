@@ -104,10 +104,12 @@ const Calendar = () => {
             <ArrowPathIcon className="h-5 w-5" />
             <span>Refresh</span>
           </button>
+          <Link to={"/meetings/new"} >
           <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center space-x-2 transition duration-200">
             <PlusIcon className="h-5 w-5" />
             <span>New Meeting</span>
           </button>
+          </Link>
         </div>
       </div>
 

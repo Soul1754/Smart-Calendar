@@ -79,7 +79,13 @@ class ChatbotService {
               "params": {
                 // Parameters based on the type
               }
-            }`,
+            }
+              Today's date is ${new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}.`,
           },
           {
             role: "user",
@@ -333,8 +339,14 @@ class ChatbotService {
           {
             role: "system",
             content: `You are a helpful calendar assistant. You help users manage their schedule and answer questions about calendar functionality. 
-            Keep your responses concise and focused on calendar-related topics. If you don't know something, say so.
-            For creating meetings or checking schedules, ask for specific details like date, time, and attendees.`,
+      Keep your responses concise and focused on calendar-related topics. If you don't know something, say so.
+      For creating meetings or checking schedules, ask for specific details like date, time, and attendees.
+      Today's date is ${new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}.`,
           },
           {
             role: "user",
