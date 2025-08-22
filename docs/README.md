@@ -40,6 +40,10 @@ Covers the React frontend implementation:
 
 Step-by-step guide for setting up Google OAuth for calendar integration.
 
+### 5. [Final Project Report](./final-report.md)
+
+Comprehensive end-to-end summary: objectives, architecture, algorithms, limitations, and future roadmap.
+
 ## Getting Started
 
 If you're new to the project, we recommend starting with the [Project Documentation](./project-documentation.md) to get a high-level overview of the system architecture and implementation details.
