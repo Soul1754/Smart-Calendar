@@ -55,6 +55,10 @@ const Chatbot = () => {
         sender: "bot",
         timestamp: new Date(),
         data: response.data,
+        followUp: response.followUp,
+        pending: response.pending,
+  collectedParams: response.collectedParams,
+  availableSlots: response.availableSlots
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -67,6 +71,34 @@ const Chatbot = () => {
         isError: true,
       };
       setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle selecting an alternative slot via button
+  const handleSelectSlot = async (slotIndex, slot) => {
+    if (loading) return;
+    const choice = String(slotIndex + 1); // backend expects simple number or time
+    const userMessage = { text: choice, sender: 'user', timestamp: new Date() };
+    setMessages(prev => [...prev, userMessage]);
+    setLoading(true);
+    try {
+      const response = await chatbotService.sendMessage(choice);
+      const botMessage = {
+        text: response.message,
+        sender: 'bot',
+        timestamp: new Date(),
+        data: response.data,
+        followUp: response.followUp,
+        pending: response.pending,
+        collectedParams: response.collectedParams,
+        availableSlots: response.availableSlots
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      console.error('Slot selection error', err);
+      setMessages(prev => [...prev, { text: 'Failed to select slot. Try again.', sender: 'bot', timestamp: new Date(), isError: true }]);
     } finally {
       setLoading(false);
     }
@@ -141,6 +173,35 @@ const Chatbot = () => {
               }`}
             >
               <div className="text-sm">{formatMessage(message.text)}</div>
+              {message.followUp && message.pending && (
+                <div className="mt-2 text-xs text-yellow-700 bg-yellow-100 rounded p-2">
+                  Awaiting: {message.pending.join(', ')}
+                </div>
+              )}
+              {message.collectedParams && message.followUp && (
+                <div className="mt-2 text-[10px] text-gray-600">
+                  Collected so far: {['title','date','time'].filter(k => message.collectedParams[k]).map(k => `${k}: ${message.collectedParams[k]}`).join(' | ')}
+                </div>
+              )}
+              {message.availableSlots && message.availableSlots.length > 0 && message.followUp && (
+                <div className="mt-3 space-y-2">
+                  <div className="text-xs font-semibold text-gray-700">Available Slots</div>
+                  <div className="flex flex-wrap gap-2">
+                    {message.availableSlots.map(slot => (
+                      <button
+                        key={slot.index}
+                        disabled={loading}
+                        onClick={() => handleSelectSlot(slot.index - 1, slot)}
+                        className="text-xs bg-white border border-blue-500 text-blue-600 rounded px-2 py-1 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        title={`Score: ${slot.score}`}
+                      >
+                        {slot.index}. {slot.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-[10px] text-gray-500">Click a slot or type number / time (e.g. 14:30) or 'cancel'</div>
+                </div>
+              )}
               {message.data && renderEvents(message.data)}
               <div className="text-xs mt-1 opacity-70 text-right">
                 {formatTime(message.timestamp)}

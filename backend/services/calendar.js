@@ -107,17 +107,24 @@ class CalendarService {
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
       // Create event
+      // Accept either ISO strings or structured {dateTime,timeZone}
+      const startObj = typeof eventData.start === 'string' ? { dateTime: eventData.start, timeZone: eventData.timeZone || 'UTC' } : eventData.start;
+      const endObj = typeof eventData.end === 'string' ? { dateTime: eventData.end, timeZone: eventData.timeZone || 'UTC' } : eventData.end;
+      // Ensure end is after start (Google rejects empty/negative ranges)
+      try {
+        const s = new Date(startObj.dateTime);
+        const e = new Date(endObj.dateTime);
+        if (!(e > s)) {
+          // Default to +30m if invalid
+          const fixedEnd = new Date(s.getTime() + 30*60000);
+          endObj.dateTime = fixedEnd.toISOString().substring(0,19);
+        }
+      } catch(_) {}
       const event = {
         summary: eventData.summary,
         description: eventData.description,
-        start: {
-          dateTime: eventData.start,
-          timeZone: "UTC",
-        },
-        end: {
-          dateTime: eventData.end,
-          timeZone: "UTC",
-        },
+        start: startObj,
+        end: endObj,
         attendees: eventData.attendees?.map((email) => ({ email })) || [],
       };
 
@@ -143,20 +150,25 @@ class CalendarService {
   async createMicrosoftEvent(user, eventData) {
     try {
       // Create event using Microsoft Graph API
+      const startObj = typeof eventData.start === 'string' ? { dateTime: eventData.start, timeZone: eventData.timeZone || 'UTC' } : eventData.start;
+      const endObj = typeof eventData.end === 'string' ? { dateTime: eventData.end, timeZone: eventData.timeZone || 'UTC' } : eventData.end;
+      // Validate chronological order
+      try {
+        const s = new Date(startObj.dateTime);
+        const e = new Date(endObj.dateTime);
+        if (!(e > s)) {
+          const fixedEnd = new Date(s.getTime() + 30*60000);
+          endObj.dateTime = fixedEnd.toISOString().substring(0,19);
+        }
+      } catch(_) {}
       const event = {
         subject: eventData.subject,
         body: {
           contentType: "HTML",
           content: eventData.body,
         },
-        start: {
-          dateTime: eventData.start,
-          timeZone: "UTC",
-        },
-        end: {
-          dateTime: eventData.end,
-          timeZone: "UTC",
-        },
+        start: startObj,
+        end: endObj,
         attendees:
           eventData.attendees?.map((email) => ({
             emailAddress: {

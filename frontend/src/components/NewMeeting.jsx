@@ -52,23 +52,33 @@ const NewMeeting = () => {
     }));
   };
 
-  const handleFindTimeSlots = () => {
-    // In a real application, this would make an API call to the backend
-    // to use the AI scheduling algorithm to find optimal time slots
-    setIsLoading(true);
-
-    // Simulating API call with setTimeout
-    setTimeout(() => {
-      // Mock response with suggested time slots
-      const mockSuggestions = [
-        { startTime: "09:00 AM", endTime: "09:30 AM", score: 0.95 },
-        { startTime: "10:30 AM", endTime: "11:00 AM", score: 0.85 },
-        { startTime: "02:00 PM", endTime: "02:30 PM", score: 0.75 },
-      ];
-
-      setSuggestedTimeSlots(mockSuggestions);
+  const handleFindTimeSlots = async () => {
+    try {
+      setIsLoading(true);
+      setSuggestedTimeSlots([]);
+      const dateStr = format(meetingData.date, "yyyy-MM-dd");
+      const payload = {
+        date: dateStr,
+        duration: meetingData.duration,
+        attendees: meetingData.attendees,
+        // optionally could send businessHours or incrementMinutes
+      };
+      const resp = await calendarService.findUnifiedAvailableSlots(payload);
+      const slots = (resp.availableSlots || []).map(s => ({
+        startTime: s.startTime || s.startTimeISO, // backend returns formatted startTime
+        endTime: s.endTime || s.endTimeISO,
+        score: s.score
+      }));
+      setSuggestedTimeSlots(slots);
+      if (slots.length === 0) {
+        toast.info("No suitable time slots found for that day.");
+      }
+    } catch (e) {
+      console.error("Find time slots error", e);
+      toast.error(e.response?.data?.message || "Failed to fetch availability");
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleScheduleMeeting = async (timeSlot) => {
@@ -260,8 +270,8 @@ const NewMeeting = () => {
               AI-Suggested Time Slots
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Our AI has analyzed all attendees' calendars and found these
-              optimal time slots for your meeting on{" "}
+              Unified availability service analyzed calendars and found these
+              suggested time slots for your meeting on{" "}
               {format(meetingData.date, "MMMM d, yyyy")}:
             </p>
 

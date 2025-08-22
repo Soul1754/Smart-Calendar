@@ -10,7 +10,7 @@ const chatbotService = require("../services/chatbot");
  */
 router.post("/message", auth, async (req, res) => {
   try {
-    const { message } = req.body;
+  const { message, timezone } = req.body;
 
     if (!message) {
       return res
@@ -19,7 +19,7 @@ router.post("/message", auth, async (req, res) => {
     }
 
     // Process the message using the chatbot service
-    const response = await chatbotService.processMessage(req.user.id, message);
+  const response = await chatbotService.processMessage(req.user.id, message, { timezone });
 
     res.json(response);
   } catch (error) {

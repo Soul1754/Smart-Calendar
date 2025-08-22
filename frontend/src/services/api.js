@@ -87,13 +87,21 @@ export const calendarService = {
     );
     return response.data;
   },
+  
+  // Unified availability (Google + Microsoft)
+  findUnifiedAvailableSlots: async (payload) => {
+    // payload: { date, duration, attendees, businessHours?, incrementMinutes?, maxResults? }
+    const response = await api.post("/api/calendar/unified/findAvailableSlots", payload);
+    return response.data;
+  }
 };
 
 // Chatbot service
 export const chatbotService = {
   // Send message to chatbot
   sendMessage: async (message) => {
-    const response = await api.post("/api/chatbot/message", { message });
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const response = await api.post("/api/chatbot/message", { message, timezone });
     return response.data;
   },
 };
