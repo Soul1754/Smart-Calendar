@@ -107,13 +107,7 @@ Frontend may require a `.env` for API base URL if deploying (e.g. `VITE_API_URL`
 ## 🕒 Timezone Handling
 Frontend sends browser timezone each chatbot message. Backend stores and applies it directly in event payload (avoiding UTC shift errors). If end ≤ start, it auto-adjusts (+30m) for safety.
 
-## 🧪 Testing & Quality (Planned)
-- Add unit tests for availability merging & scoring.
-- Integration tests with mocked Google/Microsoft APIs (nock / msw).
-- Snapshot tests for chatbot state transitions.
-
 ## 🧩 Roadmap
-- [ ] Persist chatbot sessions (Redis) for scale.
 - [ ] Microsoft free/busy via `getSchedule` / `findMeetingTimes`.
 - [ ] Recurring event creation (RRULE support).
 - [ ] User preferences: business hours, default duration.
@@ -125,16 +119,8 @@ Frontend sends browser timezone each chatbot message. Backend stores and applies
 See: `docs/final-report.md` for architecture details & future scope.  
 Also: `docs/api-documentation.md`, `docs/project-documentation.md`.
 
-## 🤝 Contributing
-1. Fork & branch (`feat/<name>`).  
-2. Run lint/tests locally (CI scripts TBD).  
-3. Submit PR with concise description & screenshots (if UI).  
-
 ## 🛡 License
 MIT (adjust if changed). Include LICENSE file for distribution.
-
-## 🙋 Support / Questions
-Open an issue or discussion in the repository. PRs improving Microsoft parity or session persistence especially welcome.
 
 ---
 Built for unified, intelligent scheduling – extensible by design.
