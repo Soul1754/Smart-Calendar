@@ -5,6 +5,7 @@
 ### 1. Frontend Changes
 
 #### `/frontend/src/contexts/ChatModelContext.jsx`
+
 - ✅ Updated available models to match current Groq offerings:
   - `llama-3.1-8b-instant` (Meta) - Default
   - `llama-3.3-70b-versatile` (Meta)
@@ -15,10 +16,12 @@
 - ✅ Model selection persists in localStorage
 
 #### `/frontend/src/services/api.js`
+
 - ✅ Updated `chatbotService.sendMessage()` to accept optional `model` parameter
 - ✅ Includes model ID in request payload when provided
 
 #### `/frontend/src/components/Chatbot.jsx`
+
 - ✅ Already has model selector dropdown in chat header (no changes needed)
 - ✅ Updated to pass `selectedModel.id` to API calls
 - ✅ Applies to both regular messages and slot selection
@@ -26,6 +29,7 @@
 ### 2. Backend Changes
 
 #### `/backend/services/chatbot.js`
+
 - ✅ Made Groq client lazy-initialized (prevents startup failures)
 - ✅ Changed default model from `groq-1` to `llama-3.1-8b-instant`
 - ✅ Added `getGroqClient()` method for safe client access
@@ -35,17 +39,20 @@
 - ✅ Model fallback hierarchy: request > env var > hardcoded default
 
 #### `/backend/routes/chatbot.js`
+
 - ✅ Added `GET /api/chatbot/models` endpoint to list available models
 - ✅ Updated `POST /api/chatbot/message` to extract and pass `model` parameter
 - ✅ Models array matches frontend for consistency
 
 #### `/backend/.env`
+
 - ✅ Added comment explaining `GROQ_MODEL` configuration
 - ✅ Documented that model can be overridden per request
 
 ### 3. Documentation
 
 #### `/docs/ai-model-selection.md` (NEW)
+
 - ✅ Comprehensive guide to the model selection feature
 - ✅ Lists all available models with specifications
 - ✅ Explains frontend and backend implementation
@@ -67,6 +74,7 @@
 ### For Developers
 
 **Backend Setup:**
+
 ```bash
 # Ensure your .env has:
 GROQ_API_KEY=your_api_key_here
@@ -74,12 +82,14 @@ GROQ_MODEL=llama-3.1-8b-instant  # Optional fallback
 ```
 
 **Frontend Setup:**
+
 ```bash
 # No additional setup needed
 # Model selector is automatically available
 ```
 
 **Testing:**
+
 ```bash
 # Backend
 cd backend
@@ -95,11 +105,13 @@ npm run dev
 ## API Examples
 
 ### Get Available Models
+
 ```bash
 curl http://localhost:5001/api/chatbot/models
 ```
 
 ### Send Message with Specific Model
+
 ```bash
 curl -X POST http://localhost:5001/api/chatbot/message \
   -H "Content-Type: application/json" \
@@ -129,6 +141,7 @@ curl -X POST http://localhost:5001/api/chatbot/message \
 ### From Previous Version
 
 The old hardcoded model `llama3-8b-8192` has been replaced with:
+
 - Default: `llama-3.1-8b-instant`
 - User can override via UI
 
@@ -139,6 +152,7 @@ The old hardcoded model `llama3-8b-8192` has been replaced with:
 ### Deprecation Notice
 
 The following models are **no longer supported** by Groq:
+
 - ❌ `llama3-8b-8192` (decommissioned)
 - ❌ `llama2-70b` (old naming)
 - ❌ `mixtral-8x7b` (old naming)
@@ -151,21 +165,26 @@ Use the new model IDs listed in `ChatModelContext.jsx`.
 ### Model Selection Guide
 
 **For Fast Responses (< 1s):**
+
 - Use `llama-3.1-8b-instant`
 
 **For Complex Reasoning:**
+
 - Use `llama-3.3-70b-versatile`
 - Use `openai/gpt-oss-120b`
 
 **For Safety/Moderation:**
+
 - Use `meta-llama/llama-guard-4-12b`
 
 **For Balanced Performance:**
+
 - Use `openai/gpt-oss-20b`
 
 ### Token Usage
 
 All models support 131K+ context window, ensuring they can handle:
+
 - Long conversation histories
 - Multiple meeting details
 - Complex scheduling scenarios
@@ -199,6 +218,7 @@ The implementation includes robust error handling:
 ## Support
 
 For issues or questions:
+
 1. Check the troubleshooting section in `ai-model-selection.md`
 2. Verify Groq API status at https://status.groq.com
 3. Review Groq documentation at https://console.groq.com/docs

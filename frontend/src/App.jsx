@@ -14,8 +14,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 // Components
 import Layout from "./components/Layout";
-import Home from "./components/Home";
-import Calendar from "./components/Calendar";
+import Landing from "./components/Landing";
+
+import WeeklyCalendar from "./components/WeeklyCalendar";
 import Meetings from "./components/Meetings";
 import NewMeeting from "./components/NewMeeting";
 import Profile from "./components/Profile";
@@ -107,7 +108,7 @@ function App() {
           email: userData.email,
           hasGoogleCalendar,
         });
-        window.history.replaceState({}, document.title, "/");
+        window.history.replaceState({}, document.title, "/dashboard");
       }
     }, [location, login]);
 
@@ -123,21 +124,23 @@ function App() {
           <BrowserRouter>
             <TokenHandler />
             <Routes>
-              {/* Public routes */}
+              {/* Public Landing Page */}
+              <Route path="/" element={<Landing />} />
+
+              {/* Auth routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
               {/* Protected routes */}
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <RequireAuth>
                     <Layout />
                   </RequireAuth>
                 }
               >
-                <Route index element={<Home />} />
-                <Route path="calendar" element={<Calendar />} />
+                <Route index element={<WeeklyCalendar />} />
                 <Route path="meetings" element={<Meetings />} />
                 <Route path="meetings/new" element={<NewMeeting />} />
                 <Route path="chatbot" element={<Chatbot />} />

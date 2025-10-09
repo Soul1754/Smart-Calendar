@@ -9,12 +9,14 @@ The Smart Calendar application now supports multiple AI models from Groq for the
 The following models are available for selection:
 
 ### 1. **Llama 3.1 8B Instant** (Default)
+
 - **ID**: `llama-3.1-8b-instant`
 - **Provider**: Meta
 - **Context Window**: 131,072 tokens
 - **Best for**: Fast responses, general queries, quick interactions
 
 ### 2. **Llama 3.3 70B Versatile**
+
 - **ID**: `llama-3.3-70b-versatile`
 - **Provider**: Meta
 - **Context Window**: 131,072 tokens
@@ -22,6 +24,7 @@ The following models are available for selection:
 - **Best for**: Complex reasoning, detailed analysis, versatile tasks
 
 ### 3. **Llama Guard 4 12B**
+
 - **ID**: `meta-llama/llama-guard-4-12b`
 - **Provider**: Meta
 - **Context Window**: 131,072 tokens
@@ -30,6 +33,7 @@ The following models are available for selection:
 - **Best for**: Content moderation, safety-focused tasks
 
 ### 4. **GPT OSS 120B**
+
 - **ID**: `openai/gpt-oss-120b`
 - **Provider**: OpenAI
 - **Context Window**: 131,072 tokens
@@ -37,6 +41,7 @@ The following models are available for selection:
 - **Best for**: Large-scale reasoning, complex problem-solving
 
 ### 5. **GPT OSS 20B**
+
 - **ID**: `openai/gpt-oss-20b`
 - **Provider**: OpenAI
 - **Context Window**: 131,072 tokens
@@ -48,11 +53,13 @@ The following models are available for selection:
 ### Frontend
 
 1. **Model Context Provider** (`ChatModelContext.jsx`)
+
    - Manages the list of available models
    - Stores user's selected model in localStorage
    - Provides `selectedModel`, `selectModel()`, and `availableModels` to components
 
 2. **Chatbot Component** (`Chatbot.jsx`)
+
    - Displays a dropdown selector in the chat header
    - Passes the selected model ID with every message request
    - Model selection persists across sessions
@@ -64,12 +71,14 @@ The following models are available for selection:
 ### Backend
 
 1. **Chatbot Service** (`services/chatbot.js`)
+
    - Accepts optional `model` parameter in `processMessage()`
    - Uses provided model or falls back to `GROQ_MODEL` env variable
    - Passes model to both `analyzeIntent()` and `generateResponse()` methods
    - Lazy initialization of Groq client prevents startup failures
 
 2. **Chatbot Route** (`routes/chatbot.js`)
+
    - Extracts `model` from request body
    - Passes model to chatbot service
    - Provides `/api/chatbot/models` endpoint to list available models
@@ -83,6 +92,7 @@ The following models are available for selection:
 ### Backend Setup
 
 1. Ensure your `.env` file has the Groq API key:
+
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
@@ -97,11 +107,13 @@ No additional configuration needed. The model selector is automatically availabl
 ## User Experience
 
 1. **Model Selection**
+
    - Open the chatbot by clicking the chat button
    - Use the dropdown in the chat header to select a model
    - Selection is saved and persists across sessions
 
 2. **Visual Feedback**
+
    - The currently selected model is displayed in the dropdown
    - Model name shows provider and capability information
 
@@ -113,11 +125,13 @@ No additional configuration needed. The model selector is automatically availabl
 ## API Reference
 
 ### Get Available Models
+
 ```
 GET /api/chatbot/models
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -134,11 +148,13 @@ GET /api/chatbot/models
 ```
 
 ### Send Message with Model
+
 ```
 POST /api/chatbot/message
 ```
 
 **Request Body:**
+
 ```json
 {
   "message": "Schedule a meeting tomorrow at 2pm",
@@ -148,6 +164,7 @@ POST /api/chatbot/message
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -169,6 +186,7 @@ POST /api/chatbot/message
 ## Technical Implementation Details
 
 ### Flow Diagram
+
 ```
 User selects model in UI
     ↓
@@ -204,16 +222,19 @@ Possible improvements for future versions:
 ## Troubleshooting
 
 ### Model Not Working
+
 - Verify `GROQ_API_KEY` is set in backend `.env`
 - Check Groq API status and model availability
 - Ensure model ID matches exactly (case-sensitive)
 
 ### Model Selection Not Persisting
+
 - Check browser localStorage is enabled
 - Clear browser cache and try again
 - Verify ChatModelContext is properly wrapped around App
 
 ### Slow Responses
+
 - Try switching to a lighter model (e.g., Llama 3.1 8B Instant)
 - Check network connectivity
 - Verify Groq API rate limits aren't exceeded
