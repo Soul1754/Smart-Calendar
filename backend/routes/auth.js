@@ -44,9 +44,10 @@ router.post("/register", async (req, res) => {
     res.status(201).json({
       token,
       user: {
-        id: newUser.id,
+        _id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        connectedCalendars: [], // New user has no connected calendars
       },
     });
   } catch (error) {
@@ -76,14 +77,32 @@ router.post("/login", async (req, res) => {
     // Generate JWT token
     const token = generateToken(user);
 
+    // Build connectedCalendars array
+    const connectedCalendars = [];
+
+    if (user.googleAccessToken) {
+      connectedCalendars.push({
+        provider: "google",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
+    if (user.microsoftAccessToken) {
+      connectedCalendars.push({
+        provider: "microsoft",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
     res.json({
       token,
       user: {
-        id: user.id,
+        _id: user.id,
         name: user.name,
         email: user.email,
-        hasGoogleCalendar: !!user.googleAccessToken,
-        hasMicrosoftCalendar: !!user.microsoftAccessToken,
+        connectedCalendars: connectedCalendars,
       },
     });
   } catch (error) {
@@ -116,9 +135,8 @@ router.get(
     const token = generateToken(req.user);
 
     // Redirect to frontend with token
-    res.redirect(
-      `${process.env.FRONTEND_URL || "http://localhost:5173"}?token=${token}`
-    );
+    const base = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.redirect(`${base.replace(/\/$/, "")}/auth/callback?token=${token}`);
   }
 );
 
@@ -141,9 +159,8 @@ router.get(
     const token = generateToken(req.user);
 
     // Redirect to frontend with token
-    res.redirect(
-      `${process.env.FRONTEND_URL || "http://localhost:5173"}?token=${token}`
-    );
+    const base = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.redirect(`${base.replace(/\/$/, "")}/auth/callback?token=${token}`);
   }
 );
 
@@ -170,17 +187,144 @@ router.get("/me", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Build connectedCalendars array
+    const connectedCalendars = [];
+
+    if (user.googleAccessToken) {
+      connectedCalendars.push({
+        provider: "google",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
+    if (user.microsoftAccessToken) {
+      connectedCalendars.push({
+        provider: "microsoft",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
     res.json({
       user: {
-        id: user.id,
+        _id: user.id,
         name: user.name,
         email: user.email,
-        hasGoogleCalendar: !!user.googleAccessToken,
-        hasMicrosoftCalendar: !!user.microsoftAccessToken,
+        connectedCalendars: connectedCalendars,
       },
     });
   } catch (error) {
     console.error("Auth error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Disconnect calendar
+router.post("/disconnect", async (req, res) => {
+  try {
+    // Get token from header
+    const token = req.header("x-auth-token");
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "No token, authorization denied" });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your_jwt_secret"
+    );
+
+    // Get user
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { provider } = req.body;
+
+    if (provider === "google") {
+      user.googleAccessToken = undefined;
+      user.googleRefreshToken = undefined;
+      user.googleId = undefined;
+    } else if (provider === "microsoft") {
+      user.microsoftAccessToken = undefined;
+      user.microsoftRefreshToken = undefined;
+      user.microsoftId = undefined;
+    } else {
+      return res.status(400).json({ message: "Invalid provider" });
+    }
+
+    await user.save();
+
+    res.json({ message: `${provider} calendar disconnected successfully` });
+  } catch (error) {
+    console.error("Disconnect error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update user preferences
+router.put("/preferences", async (req, res) => {
+  try {
+    // Get token from header
+    const token = req.header("x-auth-token");
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "No token, authorization denied" });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "your_jwt_secret"
+    );
+
+    // Get user
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user fields (only name for now)
+    if (req.body.name) {
+      user.name = req.body.name;
+    }
+
+    await user.save();
+
+    // Build connectedCalendars array
+    const connectedCalendars = [];
+
+    if (user.googleAccessToken) {
+      connectedCalendars.push({
+        provider: "google",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
+    if (user.microsoftAccessToken) {
+      connectedCalendars.push({
+        provider: "microsoft",
+        email: user.email,
+        connectedAt: user.createdAt || new Date().toISOString(),
+      });
+    }
+
+    res.json({
+      user: {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        connectedCalendars: connectedCalendars,
+      },
+    });
+  } catch (error) {
+    console.error("Update preferences error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
