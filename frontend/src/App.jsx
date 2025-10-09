@@ -7,6 +7,10 @@ import {
   useLocation,
 } from "react-router-dom";
 import { authService } from "./services/api";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { ChatModelProvider } from "./contexts/ChatModelContext";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 // Components
 import Layout from "./components/Layout";
@@ -80,6 +84,9 @@ const AuthProvider = ({ children }) => {
   );
 };
 
+// Register GSAP plugins
+gsap.registerPlugin(ScrollTrigger);
+
 function App() {
   // Token handler for OAuth redirects
   const TokenHandler = () => {
@@ -111,31 +118,39 @@ function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <TokenHandler />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <ThemeProvider>
+        <ChatModelProvider>
+          <BrowserRouter>
+            <TokenHandler />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <Layout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<Home />} />
-            <Route path="calendar" element={<Calendar />} />
-            <Route path="meetings" element={<Meetings />} />
-            <Route path="meetings/new" element={<NewMeeting />} />
-            <Route path="chatbot" element={<Chatbot />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              {/* Protected routes */}
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <Layout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<Home />} />
+                <Route path="calendar" element={<Calendar />} />
+                <Route path="meetings" element={<Meetings />} />
+                <Route path="meetings/new" element={<NewMeeting />} />
+                <Route path="chatbot" element={<Chatbot />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+            </Routes>
+            {/* Floating Chatbot */}
+            <div className="fixed bottom-4 right-4 z-50">
+              <Chatbot />
+            </div>
+          </BrowserRouter>
+        </ChatModelProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
