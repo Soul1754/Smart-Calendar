@@ -99,9 +99,13 @@ export const calendarService = {
 // Chatbot service
 export const chatbotService = {
   // Send message to chatbot
-  sendMessage: async (message) => {
+  sendMessage: async (message, model = null) => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const response = await api.post("/api/chatbot/message", { message, timezone });
+    const payload = { message, timezone };
+    if (model) {
+      payload.model = model;
+    }
+    const response = await api.post("/api/chatbot/message", payload);
     return response.data;
   },
 };

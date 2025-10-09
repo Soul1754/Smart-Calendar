@@ -40,7 +40,17 @@ Covers the React frontend implementation:
 
 Step-by-step guide for setting up Google OAuth for calendar integration.
 
-### 5. [Final Project Report](./final-report.md)
+### 5. [AI Model Selection](./ai-model-selection.md)
+
+Complete guide to the AI model selection feature:
+
+- Available Groq AI models
+- How to select and use different models
+- Configuration instructions
+- Performance comparison
+- API reference
+
+### 6. [Final Project Report](./final-report.md)
 
 Comprehensive end-to-end summary: objectives, architecture, algorithms, limitations, and future roadmap.
 

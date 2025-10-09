@@ -5,9 +5,11 @@ const ChatModelContext = createContext();
 export const useChatModel = () => useContext(ChatModelContext);
 
 const AVAILABLE_MODELS = [
-  { id: 'llama2-70b', name: 'Llama 2 (70B)', provider: 'Groq' },
-  { id: 'mixtral-8x7b', name: 'Mixtral (8x7B)', provider: 'Groq' },
-  { id: 'gemma-7b', name: 'Gemma (7B)', provider: 'Groq' }
+  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', provider: 'Meta', contextWindow: 131072 },
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', provider: 'Meta', contextWindow: 131072 },
+  { id: 'meta-llama/llama-guard-4-12b', name: 'Llama Guard 4 12B', provider: 'Meta', contextWindow: 131072 },
+  { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B', provider: 'OpenAI', contextWindow: 131072 },
+  { id: 'openai/gpt-oss-20b', name: 'GPT OSS 20B', provider: 'OpenAI', contextWindow: 131072 }
 ];
 
 export const ChatModelProvider = ({ children }) => {

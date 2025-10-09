@@ -4,13 +4,32 @@ const CalendarService = require("./calendar");
 
 class ChatbotService {
   constructor() {
-    this.groq = new Groq();
+    // lazy GROQ client; created on first use so requiring the module won't fail when env vars are missing
+    this.groq = null;
     this.calendarService = new CalendarService();
+    // Model to use for GROQ requests. Can be overridden with env var GROQ_MODEL or per-request
+    this.groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
   // In-memory session state: { intentType, params, createdAt, updatedAt }
   // NOTE: This resets on server restart; move to DB for persistence if needed.
   this.sessions = new Map();
   // Required meeting fields collected in order
   this.requiredMeetingFields = ["title", "date", "time", "attendees"]; 
+  }
+
+  // Returns a Groq client instance. If GROQ_API_KEY is missing, returns a proxy that throws with a clear message when used.
+  getGroqClient() {
+    if (this.groq) return this.groq;
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      this.groq = new Proxy({}, {
+        get: () => {
+          throw new Error('GROQ_API_KEY is not set. Set GROQ_API_KEY in your environment to use chatbot features.');
+        }
+      });
+      return this.groq;
+    }
+    this.groq = new Groq({ apiKey });
+    return this.groq;
   }
 
   /**
@@ -57,7 +76,7 @@ class ChatbotService {
       }
 
       // Analyze intent of current message (stateless extraction)
-  const intent = await this.analyzeIntent(message);
+  const intent = await this.analyzeIntent(message, options.model);
 
       // Existing scheduling session follow-up (ignore reclassification unless user clearly asks schedule check)
       if (existingSession && existingSession.intentType === 'create_meeting' && (intent.type !== 'check_schedule' || existingSession.expected)) {
@@ -138,7 +157,7 @@ class ChatbotService {
 
       // General query -> clear session if any
       if (existingSession) this.sessions.delete(userId);
-      return await this.generateResponse(message);
+      return await this.generateResponse(message, options.model);
     } catch (error) {
       console.error("Error processing message:", error);
       return {
@@ -153,9 +172,10 @@ class ChatbotService {
    * @param {string} message - The message from the user
    * @returns {Promise<Object>} - The intent and parameters
    */
-  async analyzeIntent(message) {
+  async analyzeIntent(message, model = null) {
     try {
-      const response = await this.groq.chat.completions.create({
+      const groqClient = this.getGroqClient();
+      const response = await groqClient.chat.completions.create({
         messages: [
           {
             role: "system",
@@ -196,11 +216,9 @@ class ChatbotService {
             content: message,
           },
         ],
-        model: "llama3-8b-8192",
+  model: model || this.groqModel,
         response_format: { type: "json_object" },
-      });
-
-      // Parse the JSON response
+      });      // Parse the JSON response
       const content = response.choices[0].message.content;
       return JSON.parse(content);
     } catch (error) {
@@ -450,11 +468,13 @@ class ChatbotService {
   /**
    * Generate a response for general queries
    * @param {string} message - The message from the user
+   * @param {string} model - The model to use (optional)
    * @returns {Promise<Object>} - The response to the user
    */
-  async generateResponse(message) {
+  async generateResponse(message, model = null) {
     try {
-      const response = await this.groq.chat.completions.create({
+  const groqClient = this.getGroqClient();
+  const response = await groqClient.chat.completions.create({
         messages: [
           {
             role: "system",
@@ -473,7 +493,7 @@ class ChatbotService {
             content: message,
           },
         ],
-        model: "llama3-8b-8192",
+        model: model || this.groqModel,
         max_completion_tokens: 300,
       });
 

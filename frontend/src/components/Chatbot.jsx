@@ -54,7 +54,7 @@ const Chatbot = () => {
 
     try {
       // Send message to backend
-      const response = await chatbotService.sendMessage(input);
+      const response = await chatbotService.sendMessage(input, selectedModel.id);
 
       // Add bot response to chat
       const botMessage = {
@@ -91,7 +91,7 @@ const Chatbot = () => {
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
     try {
-      const response = await chatbotService.sendMessage(choice);
+      const response = await chatbotService.sendMessage(choice, selectedModel.id);
       const botMessage = {
         text: response.message,
         sender: 'bot',
