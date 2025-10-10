@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { ArrowLeftIcon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import type { TimeSlot as APITimeSlot } from "@/lib/api/calendar";
 
 interface TimeSlot {
   startTime: string;
@@ -124,7 +123,7 @@ export default function CreateMeetingPage() {
       };
 
       const response = await calendarAPI.findUnifiedAvailableSlots(payload);
-      const slots: TimeSlot[] = (response.availableSlots || []).map((s: any) => ({
+      const slots: TimeSlot[] = (response.availableSlots || []).map((s: { startTime?: string; start?: string; endTime?: string; end?: string; score?: number }) => ({
         startTime: s.startTime || s.start || "",
         endTime: s.endTime || s.end || "",
         score: s.score || 0.5,
@@ -137,9 +136,14 @@ export default function CreateMeetingPage() {
       } else {
         toast.success(`Found ${slots.length} optimal time slots!`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Find time slots error:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch availability");
+      const errorMessage = error && typeof error === 'object' && 'response' in error && 
+        error.response && typeof error.response === 'object' && 'data' in error.response &&
+        error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data
+        ? String(error.response.data.message)
+        : "Failed to fetch availability";
+      toast.error(errorMessage);
     } finally {
       setIsLoadingSlots(false);
     }
@@ -190,9 +194,10 @@ export default function CreateMeetingPage() {
       // Redirect to calendar
       setTimeout(() => router.push("/calendar"), 1000);
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : "Please try again";
       toast.error("Failed to schedule meeting", {
-        description: error.message || "Please try again",
+        description: errorMessage,
       });
     },
   });

@@ -17,12 +17,22 @@ import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
 import Link from "next/link";
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+  location?: string;
+  attendees?: Array<{ email: string; displayName?: string; responseStatus?: string }>;
+}
+
 export default function CalendarPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [view, setView] = useState<"week" | "day">("week");
   const [date, setDate] = useState(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch calendar events
@@ -31,7 +41,7 @@ export default function CalendarPage() {
     queryFn: async () => {
       try {
         return await calendarAPI.getAllEvents();
-      } catch (error: any) {
+      } catch (error) {
         toast.error("Failed to load calendar events");
         throw error;
       }
@@ -69,7 +79,7 @@ export default function CalendarPage() {
     [router]
   );
 
-  const handleSelectEvent = useCallback((event: any) => {
+  const handleSelectEvent = useCallback((event: CalendarEvent) => {
     // Open modal with event details
     setSelectedEvent(event);
     setIsModalOpen(true);

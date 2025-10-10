@@ -50,8 +50,8 @@ function createAxiosInstance(): AxiosInstance {
     (error: AxiosError) => {
       if (error.response) {
         // Server responded with error status
-        const message =
-          (error.response.data as any)?.message || error.message || "An error occurred";
+        const responseData = error.response.data as { message?: string } | undefined;
+        const message = responseData?.message || error.message || "An error occurred";
         throw new APIError(message, error.response.status, error.response.data);
       } else if (error.request) {
         // Request was made but no response received

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import {
-  XMarkIcon,
   ClockIcon,
   MapPinIcon,
   UserGroupIcon,

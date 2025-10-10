@@ -10,12 +10,6 @@ import {
   ClockIcon,
   UsersIcon,
   ArrowRightIcon,
-  CheckCircleIcon,
-  BoltIcon,
-  ShieldCheckIcon,
-  GlobeAltIcon,
-  ChatBubbleBottomCenterTextIcon,
-  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -145,44 +139,6 @@ export default function LandingPage() {
     { value: "500K+", label: "Meetings Scheduled", icon: CalendarIcon },
     { value: "95%", label: "Time Saved", icon: ClockIcon },
     { value: "4.9/5", label: "User Rating", icon: SparklesIcon },
-  ];
-
-  const benefits = [
-    "Sync unlimited calendars from Google and Microsoft",
-    "AI-powered smart scheduling suggestions",
-    "Natural language meeting creation",
-    "Real-time availability checking",
-    "Automatic timezone detection",
-    "Meeting conflict resolution",
-    "Email notifications and reminders",
-    "Mobile-friendly responsive design",
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Product Manager",
-      company: "Tech Corp",
-      content:
-        "Smart Calendar has transformed how our team schedules meetings. The AI suggestions are incredibly accurate!",
-      avatar: "SJ",
-    },
-    {
-      name: "Michael Chen",
-      role: "Founder",
-      company: "StartupXYZ",
-      content:
-        "Finally, a calendar that understands natural language. I can create meetings just by typing what I need.",
-      avatar: "MC",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Executive Assistant",
-      company: "Global Inc",
-      content:
-        "Managing multiple executives' calendars is now a breeze. The multi-calendar view is a game-changer.",
-      avatar: "ER",
-    },
   ];
 
   if (isAuthenticated) return null;

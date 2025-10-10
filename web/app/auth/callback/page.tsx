@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { toast } from "sonner";
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -44,10 +44,11 @@ export default function AuthCallbackPage() {
 
         toast.success("Successfully connected your calendar!");
         router.push("/calendar");
-      } catch (error: any) {
+      } catch (error) {
         console.error("OAuth callback error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Please try again";
         toast.error("Failed to complete authentication", {
-          description: error.message || "Please try again",
+          description: errorMessage,
         });
         router.push("/login");
       }
@@ -64,5 +65,22 @@ export default function AuthCallbackPage() {
         <p className="text-muted-foreground">Please wait while we connect your calendar</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto" />
+            <h2 className="text-xl font-semibold text-foreground">Loading...</h2>
+          </div>
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

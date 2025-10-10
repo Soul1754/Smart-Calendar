@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import type { View, SlotInfo, EventPropGetter } from "react-big-calendar";
+import type { SlotInfo, EventPropGetter } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 // Dynamically import react-big-calendar to avoid SSR issues
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Calendar = dynamic<any>(() => import("react-big-calendar").then((mod) => mod.Calendar), {
   ssr: false,
   loading: () => (
@@ -42,16 +43,22 @@ export function CalendarView({
   onSelectSlot,
   onSelectEvent,
 }: CalendarViewProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localizer, setLocalizer] = useState<any>(null);
 
   // Initialize localizer on client side
   useEffect(() => {
     import("react-big-calendar").then((mod) => {
       const dateFnsLocalizer = mod.dateFnsLocalizer;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const format = require("date-fns").format;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const parse = require("date-fns").parse;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const startOfWeek = require("date-fns").startOfWeek;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const getDay = require("date-fns").getDay;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const enUS = require("date-fns/locale/en-US").enUS;
 
       const locales = {
@@ -81,7 +88,7 @@ export function CalendarView({
   );
 
   // Custom event component to show title first, then time
-  const CustomEvent = useCallback(({ event }: { event: any }) => {
+  const CustomEvent = useCallback(({ event }: { event: CalendarEvent }) => {
     const formatTime = (date: Date) => {
       return date.toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -106,7 +113,8 @@ export function CalendarView({
   }, []);
 
   // Custom event style getter
-  const eventStyleGetter: EventPropGetter<any> = useCallback((event: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const eventStyleGetter: EventPropGetter<any> = useCallback(() => {
     const style = {
       backgroundColor: "rgb(var(--color-primary))",
       borderRadius: "4px",
@@ -156,8 +164,10 @@ export function CalendarView({
           event: CustomEvent, // Use custom event component
         }}
         formats={{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           timeGutterFormat: (date: Date, culture?: string, localizer?: any) =>
             localizer.format(date, "h a", culture), // 12 AM, 1 AM, etc.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           dayFormat: (date: Date, culture?: string, localizer?: any) =>
             localizer.format(date, "EEE d", culture), // Sun 5, Mon 6, etc.
         }}

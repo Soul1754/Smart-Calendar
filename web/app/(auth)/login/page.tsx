@@ -70,9 +70,10 @@ export default function LoginPage() {
 
       toast.success("Login successful!");
       router.push("/calendar");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.message || "Invalid email or password");
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +201,7 @@ export default function LoginPage() {
 
             {/* Sign Up Link */}
             <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
+              <span className="text-muted-foreground">Don&apos;t have an account? </span>
               <Link href="/signup" className="text-primary hover:underline font-medium">
                 Sign up
               </Link>

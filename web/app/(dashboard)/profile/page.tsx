@@ -37,9 +37,10 @@ export default function ProfilePage() {
       refreshUser();
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to disconnect calendar", {
-        description: error.message,
+        description: errorMessage,
       });
     },
   });
@@ -56,9 +57,10 @@ export default function ProfilePage() {
       refreshUser();
       setIsEditing(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
       toast.error("Failed to update profile", {
-        description: error.message,
+        description: errorMessage,
       });
     },
   });

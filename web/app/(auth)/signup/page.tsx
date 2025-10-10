@@ -116,9 +116,10 @@ export default function SignupPage() {
 
       toast.success("Account created successfully!");
       router.push("/calendar");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Signup error:", error);
-      toast.error(error.message || "Failed to create account. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to create account. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
