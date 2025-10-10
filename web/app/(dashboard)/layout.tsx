@@ -7,13 +7,14 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, loggingOut } = useAuth();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    // Don't redirect if user is in the process of logging out
+    if (!loading && !isAuthenticated && !loggingOut) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, loggingOut, router]);
 
   // Show loading state while checking auth
   if (loading) {
@@ -27,13 +28,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
+  // Don't render anything if not authenticated AND not logging out (will redirect)
+  if (!isAuthenticated && !loggingOut) {
     return null;
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="dashboard-layout h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 overflow-hidden">{children}</main>
     </div>

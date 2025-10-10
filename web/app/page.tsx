@@ -10,6 +10,12 @@ import {
   ClockIcon,
   UsersIcon,
   ArrowRightIcon,
+  CheckCircleIcon,
+  BoltIcon,
+  ShieldCheckIcon,
+  GlobeAltIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -33,6 +39,7 @@ export default function LandingPage() {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
+      // Hero animations
       gsap.from(".hero-badge", { opacity: 0, y: -30, duration: 0.8, ease: "back.out(1.7)" });
       gsap.from(".hero-title", { opacity: 0, y: 50, duration: 1, delay: 0.3, ease: "power3.out" });
       gsap.from(".hero-subtitle", {
@@ -49,6 +56,8 @@ export default function LandingPage() {
         delay: 0.9,
         ease: "back.out(1.7)",
       });
+
+      // Floating shapes
       gsap.to(".floating-shape", {
         y: "+=30",
         duration: 3,
@@ -57,6 +66,18 @@ export default function LandingPage() {
         ease: "sine.inOut",
         stagger: { amount: 1.5 },
       });
+
+      // Stats animation
+      gsap.from(".stat-card", {
+        scrollTrigger: { trigger: ".stats-section", start: "top 80%" },
+        opacity: 0,
+        y: 40,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "power3.out",
+      });
+
+      // Feature cards
       gsap.from(".feature-card", {
         scrollTrigger: { trigger: ".features-section", start: "top 80%" },
         opacity: 0,
@@ -64,6 +85,26 @@ export default function LandingPage() {
         duration: 0.8,
         stagger: 0.2,
         ease: "power3.out",
+      });
+
+      // Benefits
+      gsap.from(".benefit-item", {
+        scrollTrigger: { trigger: ".benefits-section", start: "top 80%" },
+        opacity: 0,
+        x: -40,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: "power2.out",
+      });
+
+      // Testimonials
+      gsap.from(".testimonial-card", {
+        scrollTrigger: { trigger: ".testimonials-section", start: "top 80%" },
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "back.out(1.7)",
       });
     }, heroRef);
 
@@ -76,22 +117,71 @@ export default function LandingPage() {
       title: "Smart Scheduling",
       description:
         "AI-powered calendar that learns your preferences and suggests optimal meeting times.",
+      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: SparklesIcon,
       title: "AI Assistant",
       description:
         "Natural language chatbot to create, reschedule, and manage your meetings effortlessly.",
+      color: "from-purple-500 to-pink-500",
     },
     {
       icon: ClockIcon,
       title: "Time Optimization",
       description: "Automatically find the best time slots that work for all participants.",
+      color: "from-orange-500 to-red-500",
     },
     {
       icon: UsersIcon,
       title: "Multi-Calendar",
       description: "Connect Google and Microsoft calendars for unified scheduling experience.",
+      color: "from-green-500 to-emerald-500",
+    },
+  ];
+
+  const stats = [
+    { value: "10K+", label: "Active Users", icon: UsersIcon },
+    { value: "500K+", label: "Meetings Scheduled", icon: CalendarIcon },
+    { value: "95%", label: "Time Saved", icon: ClockIcon },
+    { value: "4.9/5", label: "User Rating", icon: SparklesIcon },
+  ];
+
+  const benefits = [
+    "Sync unlimited calendars from Google and Microsoft",
+    "AI-powered smart scheduling suggestions",
+    "Natural language meeting creation",
+    "Real-time availability checking",
+    "Automatic timezone detection",
+    "Meeting conflict resolution",
+    "Email notifications and reminders",
+    "Mobile-friendly responsive design",
+  ];
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Product Manager",
+      company: "Tech Corp",
+      content:
+        "Smart Calendar has transformed how our team schedules meetings. The AI suggestions are incredibly accurate!",
+      avatar: "SJ",
+    },
+    {
+      name: "Michael Chen",
+      role: "Founder",
+      company: "StartupXYZ",
+      content:
+        "Finally, a calendar that understands natural language. I can create meetings just by typing what I need.",
+      avatar: "MC",
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Executive Assistant",
+      company: "Global Inc",
+      content:
+        "Managing multiple executives' calendars is now a breeze. The multi-calendar view is a game-changer.",
+      avatar: "ER",
     },
   ];
 
@@ -148,7 +238,33 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-      <section className="features-section py-20 px-4 bg-muted/30">
+
+      {/* Stats Section */}
+      <section className="stats-section py-16 px-4 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div key={index} className="stat-card text-center">
+                  <div className="flex justify-center mb-3">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Icon className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                  <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="features-section py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -186,14 +302,7 @@ export default function LandingPage() {
             <p className="text-xl text-white/90 mb-8">
               Join thousands of users who are already saving time with Smart Calendar
             </p>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => router.push("/signup")}
-              className="bg-white text-primary hover:bg-white/90"
-            >
-              Start Free Today
-            </Button>
+
           </div>
         </div>
       </section>

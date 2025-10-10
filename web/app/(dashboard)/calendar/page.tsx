@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { calendarAPI } from "@/lib/api";
 import { CalendarView } from "@/components/calendar/CalendarView";
+import { EventDetailsModal } from "@/components/calendar/EventDetailsModal";
 import { Button } from "@/components/ui/Button";
 import {
   PlusIcon,
@@ -21,6 +22,8 @@ export default function CalendarPage() {
   const { user } = useAuth();
   const [view, setView] = useState<"week" | "day">("week");
   const [date, setDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch calendar events
   const { data, isLoading, error, refetch } = useQuery({
@@ -67,10 +70,14 @@ export default function CalendarPage() {
   );
 
   const handleSelectEvent = useCallback((event: any) => {
-    // Show event details (we can implement a modal later)
-    toast.info(`Event: ${event.title}`, {
-      description: event.description || "No description",
-    });
+    // Open modal with event details
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
   }, []);
 
   // Navigation handlers
@@ -260,6 +267,9 @@ export default function CalendarPage() {
             onSelectEvent={handleSelectEvent}
           />
         )}
+
+        {/* Event Details Modal */}
+        <EventDetailsModal isOpen={isModalOpen} onClose={handleCloseModal} event={selectedEvent} />
       </div>
     </div>
   );

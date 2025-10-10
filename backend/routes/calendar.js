@@ -176,7 +176,15 @@ router.get("/microsoft/events", auth, async (req, res) => {
 router.post("/google/events", auth, async (req, res) => {
   try {
     const user = req.user;
-    const { summary, description, start, end, attendees } = req.body;
+    const { summary, description, location, start, end, attendees } = req.body;
+
+    console.log("Create Google event request:", {
+      user: user.email,
+      summary,
+      hasToken: !!user.googleAccessToken,
+      startData: start,
+      endData: end,
+    });
 
     if (!user.googleAccessToken) {
       return res.status(400).json({ message: "Google Calendar not connected" });
@@ -194,22 +202,47 @@ router.post("/google/events", auth, async (req, res) => {
       refresh_token: user.googleRefreshToken,
     });
 
+    // Set up token refresh handler
+    oauth2Client.on("tokens", async (tokens) => {
+      if (tokens.refresh_token) {
+        // Store the new refresh token
+        user.googleRefreshToken = tokens.refresh_token;
+      }
+      // Always update the access token
+      if (tokens.access_token) {
+        user.googleAccessToken = tokens.access_token;
+        await user.save();
+        console.log("Google tokens refreshed and saved to user account");
+      }
+    });
+
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    // Extract dateTime strings properly
+    const startDateTime =
+      typeof start === "string" ? start : start?.dateTime || start;
+    const endDateTime = typeof end === "string" ? end : end?.dateTime || end;
 
     // Create event
     const event = {
       summary,
       description,
+      location,
       start: {
-        dateTime: start,
-        timeZone: "UTC",
+        dateTime: startDateTime,
+        timeZone: start?.timeZone || "UTC",
       },
       end: {
-        dateTime: end,
-        timeZone: "UTC",
+        dateTime: endDateTime,
+        timeZone: end?.timeZone || "UTC",
       },
       attendees: attendees?.map((email) => ({ email })) || [],
     };
+
+    console.log(
+      "Sending event to Google Calendar API:",
+      JSON.stringify(event, null, 2)
+    );
 
     const response = await calendar.events.insert({
       calendarId: "primary",
@@ -217,10 +250,17 @@ router.post("/google/events", auth, async (req, res) => {
       sendUpdates: "all",
     });
 
+    console.log("Event created successfully:", response.data.id);
     res.status(201).json({ event: response.data });
   } catch (error) {
     console.error("Google Calendar create event error:", error);
-    res.status(500).json({ message: "Server error" });
+    if (error.response && error.response.status === 401) {
+      return res.status(401).json({
+        message:
+          "Authentication failed. Please reconnect your Google Calendar.",
+      });
+    }
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -510,11 +550,9 @@ router.post("/unified/findAvailableSlots", auth, async (req, res) => {
     }
 
     if (!user.googleAccessToken && !user.microsoftAccessToken) {
-      return res
-        .status(400)
-        .json({
-          message: "No connected calendar (Google or Microsoft) for organizer",
-        });
+      return res.status(400).json({
+        message: "No connected calendar (Google or Microsoft) for organizer",
+      });
     }
 
     // Normalize and merge busy slots

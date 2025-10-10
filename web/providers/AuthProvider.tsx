@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+  loggingOut: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
 
   const isAuthenticated = !!user;
@@ -61,9 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Set logging out flag FIRST to prevent dashboard redirect
+    setLoggingOut(true);
+
+    // Clear auth state
     apiLogout();
     setUser(null);
-    router.push("/login");
+
+    // Navigate to landing page using router
+    router.push("/");
   }, [router]);
 
   const refreshUser = useCallback(async () => {
@@ -84,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated,
     loading,
+    loggingOut,
     login,
     logout,
     refreshUser,

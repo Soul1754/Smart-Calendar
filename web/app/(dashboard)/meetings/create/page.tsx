@@ -9,7 +9,15 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { toast } from "sonner";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import type { TimeSlot as APITimeSlot } from "@/lib/api/calendar";
+
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  score?: number;
+}
 
 export default function CreateMeetingPage() {
   const router = useRouter();
@@ -21,53 +29,140 @@ export default function CreateMeetingPage() {
     summary: "",
     description: "",
     location: "",
-    startDateTime: "",
-    endDateTime: "",
-    attendees: "",
+    date: new Date(),
+    duration: 30,
     provider: "google" as "google" | "microsoft",
   });
 
-  // Pre-fill times from URL params (from calendar slot selection)
+  // Attendee management
+  const [attendeeEmail, setAttendeeEmail] = useState("");
+  const [attendees, setAttendees] = useState<string[]>([]);
+
+  // AI slot finder
+  const [suggestedSlots, setSuggestedSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  // Pre-fill times from URL params (for manual scheduling from calendar click)
   useEffect(() => {
     const start = searchParams.get("start");
-    const end = searchParams.get("end");
-
     if (start) {
       const startDate = new Date(start);
       setFormData((prev) => ({
         ...prev,
-        startDateTime: formatDateTimeLocal(startDate),
-      }));
-    }
-
-    if (end) {
-      const endDate = new Date(end);
-      setFormData((prev) => ({
-        ...prev,
-        endDateTime: formatDateTimeLocal(endDate),
+        date: startDate,
       }));
     }
   }, [searchParams]);
 
-  // Create meeting mutation
-  const createMeetingMutation = useMutation({
-    mutationFn: async () => {
-      const attendeesList = formData.attendees
-        .split(",")
-        .map((email) => email.trim())
-        .filter((email) => email);
+  // Handle form changes
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateValue = new Date(e.target.value);
+    setFormData((prev) => ({ ...prev, date: dateValue }));
+  };
+
+  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData((prev) => ({ ...prev, duration: parseInt(e.target.value) }));
+  };
+
+  // Attendee management
+  const handleAddAttendee = (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = attendeeEmail.trim().toLowerCase();
+
+    if (!email) {
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (attendees.includes(email)) {
+      toast.error("This attendee is already added");
+      return;
+    }
+
+    setAttendees((prev) => [...prev, email]);
+    setAttendeeEmail("");
+  };
+
+  const handleRemoveAttendee = (email: string) => {
+    setAttendees((prev) => prev.filter((e) => e !== email));
+  };
+
+  // Find optimal time slots using AI
+  const handleFindTimeSlots = async () => {
+    if (!formData.summary.trim()) {
+      toast.error("Please enter a meeting title");
+      return;
+    }
+
+    if (attendees.length === 0) {
+      toast.error("Please add at least one attendee");
+      return;
+    }
+
+    try {
+      setIsLoadingSlots(true);
+      setSuggestedSlots([]);
+
+      const dateStr = format(formData.date, "yyyy-MM-dd");
+      const payload = {
+        date: dateStr,
+        duration: formData.duration,
+        attendees: attendees,
+      };
+
+      const response = await calendarAPI.findUnifiedAvailableSlots(payload);
+      const slots: TimeSlot[] = (response.availableSlots || []).map((s: any) => ({
+        startTime: s.startTime || s.start || "",
+        endTime: s.endTime || s.end || "",
+        score: s.score || 0.5,
+      }));
+
+      setSuggestedSlots(slots);
+
+      if (slots.length === 0) {
+        toast.info("No suitable time slots found for that day. Try another date?");
+      } else {
+        toast.success(`Found ${slots.length} optimal time slots!`);
+      }
+    } catch (error: any) {
+      console.error("Find time slots error:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch availability");
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
+  // Schedule meeting at specific time slot
+  const scheduleMutation = useMutation({
+    mutationFn: async (timeSlot: TimeSlot) => {
+      const dateStr = format(formData.date, "yyyy-MM-dd");
+      const startDateTime = new Date(`${dateStr} ${timeSlot.startTime}`);
+      const endDateTime = new Date(`${dateStr} ${timeSlot.endTime}`);
 
       const eventData = {
         summary: formData.summary,
         description: formData.description,
         location: formData.location,
         start: {
-          dateTime: new Date(formData.startDateTime).toISOString(),
+          dateTime: startDateTime.toISOString(),
         },
         end: {
-          dateTime: new Date(formData.endDateTime).toISOString(),
+          dateTime: endDateTime.toISOString(),
         },
-        attendees: attendeesList, // Just the email strings
+        attendees: attendees,
       };
 
       if (formData.provider === "google") {
@@ -77,52 +172,38 @@ export default function CreateMeetingPage() {
       }
     },
     onSuccess: () => {
-      toast.success("Meeting created successfully!");
+      toast.success(`Meeting "${formData.summary}" scheduled successfully!`);
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
-      router.push("/calendar");
+
+      // Reset form
+      setFormData({
+        summary: "",
+        description: "",
+        location: "",
+        date: new Date(),
+        duration: 30,
+        provider: "google",
+      });
+      setAttendees([]);
+      setSuggestedSlots([]);
+
+      // Redirect to calendar
+      setTimeout(() => router.push("/calendar"), 1000);
     },
     onError: (error: any) => {
-      toast.error("Failed to create meeting", {
+      toast.error("Failed to schedule meeting", {
         description: error.message || "Please try again",
       });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.summary.trim()) {
-      toast.error("Please enter a meeting title");
-      return;
-    }
-
-    if (!formData.startDateTime || !formData.endDateTime) {
-      toast.error("Please select start and end times");
-      return;
-    }
-
-    const start = new Date(formData.startDateTime);
-    const end = new Date(formData.endDateTime);
-
-    if (end <= start) {
-      toast.error("End time must be after start time");
-      return;
-    }
-
-    createMeetingMutation.mutate();
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleScheduleSlot = (slot: TimeSlot) => {
+    scheduleMutation.mutate(slot);
   };
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
@@ -130,18 +211,21 @@ export default function CreateMeetingPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Create Meeting</h1>
-            <p className="text-muted-foreground mt-1">Schedule a new meeting with your team</p>
+            <p className="text-muted-foreground mt-1">
+              Use AI to find the perfect time for your meeting
+            </p>
           </div>
         </div>
 
-        {/* Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Meeting Details</CardTitle>
-            <CardDescription>Fill in the information below to create a new meeting</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Main Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column: Meeting Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Meeting Details</CardTitle>
+              <CardDescription>Basic information about the meeting</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               {/* Calendar Provider */}
               <div className="space-y-2">
                 <Label htmlFor="provider">Calendar Provider</Label>
@@ -159,7 +243,7 @@ export default function CreateMeetingPage() {
 
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="summary">Title *</Label>
+                <Label htmlFor="summary">Meeting Title *</Label>
                 <Input
                   id="summary"
                   name="summary"
@@ -171,46 +255,36 @@ export default function CreateMeetingPage() {
                 />
               </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDateTime">Start Time *</Label>
-                  <Input
-                    id="startDateTime"
-                    name="startDateTime"
-                    type="datetime-local"
-                    value={formData.startDateTime}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDateTime">End Time *</Label>
-                  <Input
-                    id="endDateTime"
-                    name="endDateTime"
-                    type="datetime-local"
-                    value={formData.endDateTime}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+              {/* Date */}
+              <div className="space-y-2">
+                <Label htmlFor="date">Date *</Label>
+                <Input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={format(formData.date, "yyyy-MM-dd")}
+                  onChange={handleDateChange}
+                  required
+                />
               </div>
 
-              {/* Attendees */}
+              {/* Duration */}
               <div className="space-y-2">
-                <Label htmlFor="attendees">Attendees</Label>
-                <Input
-                  id="attendees"
-                  name="attendees"
-                  type="text"
-                  placeholder="email1@example.com, email2@example.com"
-                  value={formData.attendees}
-                  onChange={handleChange}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Enter email addresses separated by commas
-                </p>
+                <Label htmlFor="duration">Duration *</Label>
+                <select
+                  id="duration"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleDurationChange}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="15">15 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="90">1.5 hours</option>
+                  <option value="120">2 hours</option>
+                </select>
               </div>
 
               {/* Location */}
@@ -232,37 +306,177 @@ export default function CreateMeetingPage() {
                 <textarea
                   id="description"
                   name="description"
-                  rows={4}
+                  rows={3}
                   placeholder="Meeting agenda, notes, etc."
                   value={formData.description}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => router.back()}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMeetingMutation.isPending}>
-                  {createMeetingMutation.isPending ? "Creating..." : "Create Meeting"}
-                </Button>
+          {/* Right Column: Attendees */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Attendees</CardTitle>
+              <CardDescription>Add people to invite to this meeting</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add Attendee Form */}
+              <form onSubmit={handleAddAttendee} className="flex gap-2">
+                <Input
+                  type="email"
+                  value={attendeeEmail}
+                  onChange={(e) => setAttendeeEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="flex-1"
+                />
+                <Button type="submit">Add</Button>
+              </form>
+
+              {/* Attendee List */}
+              <div className="border border-border rounded-md p-4 min-h-[300px] max-h-[400px] overflow-y-auto">
+                {attendees.length > 0 ? (
+                  <ul className="space-y-2">
+                    {attendees.map((email, index) => (
+                      <li
+                        key={index}
+                        className="flex justify-between items-center bg-muted/50 p-3 rounded-md group hover:bg-muted transition-colors"
+                      >
+                        <span className="text-sm">{email}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttendee(email)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive/80"
+                          aria-label="Remove attendee"
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                    <p className="text-muted-foreground text-sm">No attendees added yet</p>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      Add at least one attendee to find optimal times
+                    </p>
+                  </div>
+                )}
               </div>
-            </form>
-          </CardContent>
-        </Card>
+
+              {/* Find Time Slots Button */}
+              <Button
+                type="button"
+                onClick={handleFindTimeSlots}
+                disabled={!formData.summary || attendees.length === 0 || isLoadingSlots}
+                className="w-full"
+                size="lg"
+              >
+                {isLoadingSlots ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Finding optimal times...
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="h-5 w-5 mr-2" />
+                    Find Optimal Meeting Times
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* AI Suggested Time Slots */}
+        {suggestedSlots.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SparklesIcon className="h-6 w-6 text-primary" />
+                AI-Suggested Time Slots
+              </CardTitle>
+              <CardDescription>
+                Analyzed calendars and found these optimal time slots for{" "}
+                {format(formData.date, "MMMM d, yyyy")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {suggestedSlots.map((slot, index) => (
+                  <div
+                    key={index}
+                    className="border border-border rounded-lg p-4 hover:border-primary hover:shadow-md transition-all duration-200 bg-card"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="text-lg font-semibold">
+                        {slot.startTime} - {slot.endTime}
+                      </div>
+                      <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {Math.round((slot.score || 0.5) * 100)}% match
+                      </span>
+                    </div>
+                    <Button
+                      onClick={() => handleScheduleSlot(slot)}
+                      disabled={scheduleMutation.isPending}
+                      className="w-full"
+                    >
+                      {scheduleMutation.isPending ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Creating...
+                        </>
+                      ) : (
+                        "Schedule"
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
-}
-
-// Helper function to format date for datetime-local input
-function formatDateTimeLocal(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }

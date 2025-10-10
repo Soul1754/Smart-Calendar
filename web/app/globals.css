@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
-/* Prevent body scroll, allow component-level scrolling */
+/* Prevent body scroll on dashboard pages only, allow component-level scrolling */
 html,
 body {
+  height: 100%;
+}
+
+/* Dashboard pages need overflow hidden */
+.dashboard-layout {
   height: 100%;
   overflow: hidden;
 }
