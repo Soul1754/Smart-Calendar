@@ -11,19 +11,35 @@ export const ChatMessageRequestSchema = z.object({
 
 export const ChatMessageResponseSchema = z.object({
   message: z.string(),
-  data: z.unknown().optional(),
+  data: z
+    .object({
+      events: z
+        .array(
+          z.object({
+            title: z.string(),
+            time: z.string(),
+            attendees: z.number().optional(),
+          })
+        )
+        .optional(),
+    })
+    .optional(),
   followUp: z.string().optional(),
   pending: z.boolean().optional(),
-  collectedParams: z.record(z.string(), z.unknown()).optional(),
+  collectedParams: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   availableSlots: z
     .array(
       z.object({
         start: z.string(),
         end: z.string(),
+        index: z.number().optional(),
+        label: z.string().optional(),
+        score: z.number().optional(),
       })
     )
     .optional(),
 });
+
 
 // Type exports
 export type ChatMessageRequest = z.infer<typeof ChatMessageRequestSchema>;
@@ -33,13 +49,26 @@ export interface ChatMessage {
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
-  data?: unknown;
+  data?: {
+    events?: Array<{
+      title: string;
+      time: string;
+      attendees?: number;
+    }>;
+  };
   followUp?: string;
   pending?: boolean;
-  collectedParams?: Record<string, unknown>;
-  availableSlots?: Array<{ start: string; end: string }>;
+  collectedParams?: Record<string, string | number | boolean>;
+  availableSlots?: Array<{
+    start: string;
+    end: string;
+    index?: number;
+    label?: string;
+    score?: number;
+  }>;
   isError?: boolean;
 }
+
 
 // API functions
 export async function sendMessage(message: string, model?: string): Promise<ChatMessageResponse> {

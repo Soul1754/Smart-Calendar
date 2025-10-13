@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
 import Link from "next/link";
+import { FloatingChatbot } from "@/components/chat";
 
 interface CalendarEvent {
   id: string;
@@ -281,6 +282,7 @@ export default function CalendarPage() {
         {/* Event Details Modal */}
         <EventDetailsModal isOpen={isModalOpen} onClose={handleCloseModal} event={selectedEvent} />
       </div>
+      <FloatingChatbot />
     </div>
   );
 }

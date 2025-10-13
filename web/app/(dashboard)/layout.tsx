@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Navbar } from "@/components/layout/Navbar";
+import { FloatingChatbot } from "@/components/chat/FloatingChatbot";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -37,6 +38,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="dashboard-layout h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 overflow-hidden">{children}</main>
+      
+      {/* Floating chatbot available on all dashboard pages */}
+      
     </div>
   );
 }
