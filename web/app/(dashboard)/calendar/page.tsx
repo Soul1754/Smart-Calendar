@@ -28,6 +28,15 @@ interface CalendarEvent {
   attendees?: Array<{ email: string; displayName?: string; responseStatus?: string }>;
 }
 
+/**
+ * Render the calendar page UI with navigation, view toggling, event fetching, slot selection, and an event details modal.
+ *
+ * The component fetches and refreshes calendar events, transforms API data for the calendar view, handles slot and event selection
+ * (navigating to meeting creation or opening the details modal), and conditionally renders loading, error, no-calendar, empty-view,
+ * or populated calendar states. It also includes a floating chatbot.
+ *
+ * @returns The CalendarPage React element containing the toolbar, calendar grid, event details modal, and floating chatbot.
+ */
 export default function CalendarPage() {
   const router = useRouter();
   const { user } = useAuth();

@@ -50,6 +50,16 @@ const defaultModels: ChatModel[] = [
 
 const ChatModelContext = createContext<ChatModelContextType | undefined>(undefined);
 
+/**
+ * Provides ChatModelContext to descendants and manages the currently selected chat model.
+ *
+ * Initializes the selected model from localStorage in browser environments (falling back to the first default model)
+ * and persists any selection changes to localStorage. Exposes `selectedModel`, `selectModel`, and `availableModels`
+ * through the context value.
+ *
+ * @param children - React nodes that will receive the ChatModelContext
+ * @returns The ChatModelContext provider element containing the current selection, a selection updater, and the available models
+ */
 export function ChatModelProvider({ children }: { children: ReactNode }) {
   const [selectedModel, setSelectedModel] = useState<ChatModel>(() => {
     // Load from localStorage on client side only

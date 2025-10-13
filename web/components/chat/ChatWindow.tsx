@@ -11,6 +11,15 @@ interface ChatWindowProps {
   onClose: () => void;
 }
 
+/**
+ * Renders the AI Calendar Assistant chat window, including message history, model selection, slot selection, and message input.
+ *
+ * Displays a conversational UI that shows bot and user messages, renders event data and collected parameters, provides selectable available slots, and lets the user send messages or choose a slot. Automatically scrolls to the latest message and injects an initial welcome bot message when a user is present and the conversation is empty.
+ *
+ * @param isOpen - Whether the chat window should be visible; when false the component renders nothing.
+ * @param onClose - Callback invoked when the user requests to close the chat window.
+ * @returns The chat window UI or `null` when `isOpen` is false.
+ */
 export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   const { user } = useAuth();
   const { selectedModel, selectModel, availableModels } = useChatModel();
