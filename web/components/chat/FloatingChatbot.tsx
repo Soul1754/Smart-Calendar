@@ -4,6 +4,14 @@ import { useState } from "react";
 import { ChatBubbleLeftRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ChatWindow } from "./ChatWindow";
 
+/**
+ * Render a floating chat button that toggles a chat window.
+ *
+ * The button is fixed to the bottom-right, updates internal open state when clicked,
+ * and the ChatWindow receives the current `isOpen` state and an `onClose` handler.
+ *
+ * @returns The component's JSX element containing the floating button and chat window.
+ */
 export function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
 

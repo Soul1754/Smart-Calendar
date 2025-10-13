@@ -12,6 +12,16 @@ import { CalendarIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/
 import Link from "next/link";
 import { toast } from "sonner";
 
+/**
+ * Render the Sign Up page with a registration form, client-side validation, password-strength feedback,
+ * and OAuth signup options (Google, Microsoft).
+ *
+ * The component handles form state, input validation, submission to the authentication API,
+ * invoking the app auth provider on successful registration, showing toast notifications,
+ * and redirecting to the calendar on success.
+ *
+ * @returns The React element for the signup page.
+ */
 export default function SignupPage() {
   const router = useRouter();
   const { login } = useAuth();

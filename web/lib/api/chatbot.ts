@@ -70,7 +70,13 @@ export interface ChatMessage {
 }
 
 
-// API functions
+/**
+ * Sends a chat message to the chatbot API and returns the chatbot's response.
+ *
+ * @param message - The text of the message to send
+ * @param model - Optional model identifier to use for processing the message
+ * @returns The chatbot response object containing `message` and optional `data`, `followUp`, `pending`, `collectedParams`, and `availableSlots`
+ */
 export async function sendMessage(message: string, model?: string): Promise<ChatMessageResponse> {
   const data: ChatMessageRequest = {
     message,
