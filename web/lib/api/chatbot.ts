@@ -25,7 +25,7 @@ export const ChatMessageResponseSchema = z.object({
     })
     .optional(),
   followUp: z.string().optional(),
-  pending: z.boolean().optional(),
+  pending: z.union([z.boolean(), z.array(z.string())]).optional(),
   collectedParams: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   availableSlots: z
     .array(
@@ -39,7 +39,6 @@ export const ChatMessageResponseSchema = z.object({
     )
     .optional(),
 });
-
 
 // Type exports
 export type ChatMessageRequest = z.infer<typeof ChatMessageRequestSchema>;
@@ -57,7 +56,7 @@ export interface ChatMessage {
     }>;
   };
   followUp?: string;
-  pending?: boolean;
+  pending?: boolean | string[];
   collectedParams?: Record<string, string | number | boolean>;
   availableSlots?: Array<{
     start: string;
@@ -68,7 +67,6 @@ export interface ChatMessage {
   }>;
   isError?: boolean;
 }
-
 
 // API functions
 export async function sendMessage(message: string, model?: string): Promise<ChatMessageResponse> {

@@ -153,9 +153,10 @@ class ChatbotService {
         }
         const nextParam = missing[0];
         existingSession.expected = nextParam;
+        const currentDate = new Date().toISOString().split("T")[0];
         const promptMap = {
           title: "What should the meeting be called?",
-          date: 'On which date? (e.g. 2025-08-22 or "tomorrow")',
+          date: `On which date? (e.g. ${currentDate} or "tomorrow")`,
           time: "What start time? (HH:MM, 24h or am/pm)",
           attendees: "Who should attend? Provide emails separated by commas.",
         };

@@ -43,7 +43,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || !selectedModel) return;
 
     const userMessage: ChatMessage = {
       text: input,
@@ -55,7 +55,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     setLoading(true);
 
     try {
-      const response = await sendMessage(input, selectedModel.id);
+      const response = await sendMessage(input, selectedModel?.id);
 
       const botMessage: ChatMessage = {
         text: response.message,
@@ -86,7 +86,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
   // Handle selecting an alternative slot via button
   const handleSelectSlot = async (slotIndex: number) => {
-    if (loading) return;
+    if (loading || !selectedModel) return;
     const choice = String(slotIndex + 1);
     const userMessage: ChatMessage = {
       text: choice,
@@ -96,7 +96,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
     try {
-      const response = await sendMessage(choice, selectedModel.id);
+      const response = await sendMessage(choice, selectedModel?.id);
       const botMessage: ChatMessage = {
         text: response.message,
         sender: "bot",
@@ -144,8 +144,10 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
   // Render events safely
   const renderEvents = (data: unknown): ReactNode => {
-    if (!data || typeof data !== 'object' || !('events' in data)) return null;
-    const eventData = data as { events: Array<{ title: string; time: string; attendees?: number }> };
+    if (!data || typeof data !== "object" || !("events" in data)) return null;
+    const eventData = data as {
+      events: Array<{ title: string; time: string; attendees?: number }>;
+    };
     if (!eventData.events || eventData.events.length === 0) return null;
 
     return (
@@ -169,21 +171,21 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
   };
 
   // ✅ FIXED: typed as ReactNode to match JSX return
- const renderCollectedParams = (
-   collectedParams?: Record<string, string | number | boolean | null | undefined>
- ): ReactNode => {
-   if (!collectedParams) return "None";
+  const renderCollectedParams = (
+    collectedParams?: Record<string, string | number | boolean | null | undefined>
+  ): ReactNode => {
+    if (!collectedParams) return "None";
 
-   const validEntries = Object.entries(collectedParams).filter(
-     ([, value]) => value !== null && value !== undefined
-   );
+    const validEntries = Object.entries(collectedParams).filter(
+      ([, value]) => value !== null && value !== undefined
+    );
 
-   if (validEntries.length === 0) return "None";
+    if (validEntries.length === 0) return "None";
 
-   const params = validEntries.map(([key, value]) => `${key}: ${String(value)}`).join(" | ");
+    const params = validEntries.map(([key, value]) => `${key}: ${String(value)}`).join(" | ");
 
-   return params;
- };
+    return params;
+  };
 
   if (!isOpen) return null;
 
@@ -198,11 +200,12 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
         <div className="flex items-center gap-2">
           <select
-            value={selectedModel.id}
+            value={selectedModel?.id ?? ""}
             onChange={(e) => {
               const model = availableModels.find((m) => m.id === e.target.value);
               if (model) selectModel(model);
             }}
+            disabled={loading || availableModels.length === 0 || !selectedModel}
             className="px-2 py-1 rounded text-xs bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20 focus:outline-none focus:ring-2 focus:ring-primary-foreground/50"
           >
             {availableModels.map((model) => (
@@ -260,20 +263,20 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                 <div className="mt-3 space-y-2">
                   <div className="text-xs font-semibold text-foreground">Available Slots</div>
                   <div className="flex flex-wrap gap-2">
-                    {message.availableSlots.map((slot) => (
-                      <button
-                        key={slot.index ?? slot.start}
-                        disabled={loading}
-                        onClick={() => {
-                          const index = slot.index ?? 1;
-                          handleSelectSlot(index - 1);
-                        }}
-                        className="text-xs rounded px-2 py-1 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
-                        title={slot.score ? `Score: ${slot.score}` : ""}
-                      >
-                        {slot.index ?? 1}. {slot.label ?? slot.start}
-                      </button>
-                    ))}
+                    {message.availableSlots.map((slot, i) => {
+                      const displayIndex = slot.index ?? i + 1;
+                      return (
+                        <button
+                          key={displayIndex ?? slot.start}
+                          disabled={loading || !selectedModel}
+                          onClick={() => handleSelectSlot(displayIndex - 1)}
+                          className="text-xs rounded px-2 py-1 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
+                          title={slot.score ? `Score: ${slot.score}` : ""}
+                        >
+                          {displayIndex}. {slot.label ?? slot.start}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="text-[10px] text-muted-foreground">
                     Click a slot or type number / time (e.g. 14:30) or &apos;cancel&apos;
@@ -318,11 +321,11 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             className="flex-1 rounded-lg px-4 py-2 bg-background border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-            disabled={loading}
+            disabled={loading || !selectedModel}
           />
           <button
             type="submit"
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || !selectedModel}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring"
           >
             Send

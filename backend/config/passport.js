@@ -57,8 +57,8 @@ passport.use(
         if (user) {
           // Attach Google identifiers/tokens to the existing account if missing
           user.googleId = user.googleId || profile.id;
-          user.googleAccessToken = accessToken;
-          user.googleRefreshToken = refreshToken;
+          if (accessToken) user.googleAccessToken = accessToken;
+          if (refreshToken) user.googleRefreshToken = refreshToken;
           // Ensure email and name are populated
           if (email && !user.email) user.email = email;
           if (profile.displayName && !user.name)
@@ -73,9 +73,9 @@ passport.use(
           googleId: profile.id,
           email: email,
           name: profile.displayName,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
         };
+        if (accessToken) newUserData.googleAccessToken = accessToken;
+        if (refreshToken) newUserData.googleRefreshToken = refreshToken;
 
         try {
           const newUser = new User(newUserData);
@@ -92,8 +92,8 @@ passport.use(
             const existing = await User.findOne({ email });
             if (existing) {
               existing.googleId = existing.googleId || profile.id;
-              existing.googleAccessToken = accessToken;
-              existing.googleRefreshToken = refreshToken;
+              if (accessToken) existing.googleAccessToken = accessToken;
+              if (refreshToken) existing.googleRefreshToken = refreshToken;
               await existing.save();
               return done(null, existing);
             }
@@ -137,8 +137,8 @@ passport.use(
 
         if (user) {
           user.microsoftId = user.microsoftId || profile.id;
-          user.microsoftAccessToken = accessToken;
-          user.microsoftRefreshToken = refreshToken;
+          if (accessToken) user.microsoftAccessToken = accessToken;
+          if (refreshToken) user.microsoftRefreshToken = refreshToken;
           if (email && !user.email) user.email = email;
           if (profile.displayName && !user.name)
             user.name = profile.displayName;
@@ -150,9 +150,9 @@ passport.use(
           microsoftId: profile.id,
           email: email,
           name: profile.displayName,
-          microsoftAccessToken: accessToken,
-          microsoftRefreshToken: refreshToken,
         };
+        if (accessToken) newUserData.microsoftAccessToken = accessToken;
+        if (refreshToken) newUserData.microsoftRefreshToken = refreshToken;
 
         try {
           const newUser = new User(newUserData);
@@ -167,8 +167,8 @@ passport.use(
             const existing = await User.findOne({ email });
             if (existing) {
               existing.microsoftId = existing.microsoftId || profile.id;
-              existing.microsoftAccessToken = accessToken;
-              existing.microsoftRefreshToken = refreshToken;
+              if (accessToken) existing.microsoftAccessToken = accessToken;
+              if (refreshToken) existing.microsoftRefreshToken = refreshToken;
               await existing.save();
               return done(null, existing);
             }

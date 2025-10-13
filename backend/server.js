@@ -19,12 +19,18 @@ app.use(passport.initialize());
 
 // Configure Passport
 // Ensure passport config picks up callback URLs from env
+const backendBaseUrl =
+  process.env.BACKEND_URL && process.env.BACKEND_URL.trim()
+    ? process.env.BACKEND_URL
+    : "http://localhost:5001";
+
 process.env.GOOGLE_CALLBACK_URL =
   process.env.GOOGLE_CALLBACK_URL ||
-  process.env.BACKEND_URL + "/auth/google/callback";
+  `${backendBaseUrl}/auth/google/callback`;
+
 process.env.MICROSOFT_CALLBACK_URL =
   process.env.MICROSOFT_CALLBACK_URL ||
-  process.env.BACKEND_URL + "/auth/microsoft/callback";
+  `${backendBaseUrl}/auth/microsoft/callback`;
 require("./config/passport");
 
 // Connect to MongoDB
