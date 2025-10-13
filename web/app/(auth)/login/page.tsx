@@ -12,6 +12,15 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { toast } from "sonner";
 
+/**
+ * Render the login page with email/password form and Google/Microsoft OAuth options.
+ *
+ * Includes client-side validation for email and password, submits credentials to the API,
+ * invokes the AuthProvider login on success, shows success/error toasts, and redirects to "/calendar".
+ * Also initiates provider OAuth flows by redirecting the browser to the provider's auth URL.
+ *
+ * @returns The React element for the login page.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
