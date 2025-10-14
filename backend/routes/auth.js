@@ -226,6 +226,14 @@ router.get("/me", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log("/auth/me: found user", {
+      _id: user._id,
+      id: user.id,
+      email: user.email,
+      hasGoogleToken: !!user.googleAccessToken,
+      hasMicrosoftToken: !!user.microsoftAccessToken,
+    });
+
     // Build connectedCalendars array
     const connectedCalendars = [];
 
@@ -245,14 +253,17 @@ router.get("/me", async (req, res) => {
       });
     }
 
-    res.json({
+    const responseData = {
       user: {
-        _id: user.id,
+        _id: String(user._id || user.id),
         name: user.name,
         email: user.email,
         connectedCalendars: connectedCalendars,
       },
-    });
+    };
+
+    console.log("/auth/me: sending response", JSON.stringify(responseData));
+    res.json(responseData);
   } catch (error) {
     console.error("Auth error:", error);
     res.status(500).json({ message: "Server error" });

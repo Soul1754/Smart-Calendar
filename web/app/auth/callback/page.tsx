@@ -30,16 +30,28 @@ function AuthCallbackContent() {
       }
 
       try {
+        console.log("OAuth callback: received token", token.substring(0, 20) + "...");
+        
         // Ensure we save the token with the exact key used by the API client
         const { setAuthToken } = await import("@/lib/api/client");
         setAuthToken(token);
+        console.log("OAuth callback: token saved to localStorage");
 
         // Fetch user data with the token
-  const { getCurrentUser } = await import("@/lib/api/auth");
-  const { user } = await getCurrentUser(token);
+        const { getCurrentUser } = await import("@/lib/api/auth");
+        console.log("OAuth callback: fetching user...");
+        const response = await getCurrentUser(token);
+        console.log("OAuth callback: received user response", response);
+        
+        const { user } = response;
+        if (!user) {
+          throw new Error("User object is missing from response");
+        }
+        console.log("OAuth callback: user data", { id: user._id, email: user.email });
 
         // Now login with both token and user data
         login(token, user);
+        console.log("OAuth callback: login() called");
 
         toast.success("Successfully connected your calendar!");
         router.push("/calendar");
