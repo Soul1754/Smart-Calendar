@@ -13,14 +13,9 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 /**
- * Render the Sign Up page with a registration form, client-side validation, password-strength feedback,
- * and OAuth signup options (Google, Microsoft).
+ * Render the sign-up page with a registration form, password-strength feedback, and OAuth signup options.
  *
- * The component handles form state, input validation, submission to the authentication API,
- * invoking the app auth provider on successful registration, showing toast notifications,
- * and redirecting to the calendar on success.
- *
- * @returns The React element for the signup page.
+ * @returns The React element for the sign-up page.
  */
 export default function SignupPage() {
   const router = useRouter();
