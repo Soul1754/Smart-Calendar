@@ -132,22 +132,22 @@ For production, ensure your DNS points to the Ingress controller's external IP.
 
 ### Key Configuration Options
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `backend.replicaCount` | Number of backend replicas | `1` |
-| `backend.image.repository` | Backend Docker image repository | `your-dockerhub-username/smart-calendar-backend` |
-| `backend.image.tag` | Backend image tag | `latest` |
-| `backend.containerPort` | Backend container port | `5001` |
-| `backend.service.port` | Backend service port | `5001` |
-| `frontend.replicaCount` | Number of frontend replicas | `1` |
-| `frontend.image.repository` | Frontend Docker image repository | `your-dockerhub-username/smart-calendar-frontend` |
-| `frontend.image.tag` | Frontend image tag | `latest` |
-| `frontend.containerPort` | Frontend container port | `3000` |
-| `frontend.service.port` | Frontend service port | `3000` |
-| `mongodb.uri` | Base64-encoded MongoDB connection string | `""` |
-| `ingress.enabled` | Enable Ingress | `true` |
-| `ingress.className` | Ingress class name | `nginx` |
-| `ingress.host` | Application hostname | `smart-calendar.local` |
+| Parameter                   | Description                              | Default                                           |
+| --------------------------- | ---------------------------------------- | ------------------------------------------------- |
+| `backend.replicaCount`      | Number of backend replicas               | `1`                                               |
+| `backend.image.repository`  | Backend Docker image repository          | `your-dockerhub-username/smart-calendar-backend`  |
+| `backend.image.tag`         | Backend image tag                        | `latest`                                          |
+| `backend.containerPort`     | Backend container port                   | `5001`                                            |
+| `backend.service.port`      | Backend service port                     | `5001`                                            |
+| `frontend.replicaCount`     | Number of frontend replicas              | `1`                                               |
+| `frontend.image.repository` | Frontend Docker image repository         | `your-dockerhub-username/smart-calendar-frontend` |
+| `frontend.image.tag`        | Frontend image tag                       | `latest`                                          |
+| `frontend.containerPort`    | Frontend container port                  | `3000`                                            |
+| `frontend.service.port`     | Frontend service port                    | `3000`                                            |
+| `mongodb.uri`               | Base64-encoded MongoDB connection string | `""`                                              |
+| `ingress.enabled`           | Enable Ingress                           | `true`                                            |
+| `ingress.className`         | Ingress class name                       | `nginx`                                           |
+| `ingress.host`              | Application hostname                     | `smart-calendar.local`                            |
 
 ### Health Checks
 
@@ -254,6 +254,7 @@ kubectl logs -l app.kubernetes.io/component=backend
 ### High Availability
 
 1. **Increase replica counts**:
+
    ```yaml
    backend:
      replicaCount: 3

@@ -53,7 +53,7 @@ mongodb:
 
 # Update host if not using local (line 156)
 ingress:
-  host: "smart-calendar.local"  # or your actual domain
+  host: "smart-calendar.local" # or your actual domain
 ```
 
 ### 4. Build and Push Docker Images
@@ -74,11 +74,13 @@ docker push YOUR-USERNAME/smart-calendar-frontend:latest
 ### 5. Install Ingress Controller (if not already installed)
 
 For Minikube:
+
 ```bash
 minikube addons enable ingress
 ```
 
 For bare clusters:
+
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
@@ -161,6 +163,7 @@ helm uninstall smart-calendar
 ## Troubleshooting
 
 ### Pods stuck in ImagePullBackOff
+
 ```bash
 # Check if images exist in registry
 docker images | grep smart-calendar
@@ -173,6 +176,7 @@ kubectl describe pod <pod-name>
 ```
 
 ### Backend can't connect to MongoDB
+
 ```bash
 # Verify secret exists
 kubectl get secret smart-calendar-mongodb
@@ -185,6 +189,7 @@ kubectl logs -l app.kubernetes.io/component=backend --tail=100
 ```
 
 ### Ingress not working
+
 ```bash
 # Verify Ingress controller is running
 kubectl get pods -n ingress-nginx
@@ -197,6 +202,7 @@ cat /etc/hosts | grep smart-calendar
 ```
 
 ### Health probes failing
+
 ```bash
 # Check if /health endpoint exists (backend)
 kubectl port-forward svc/smart-calendar-backend 5001:5001

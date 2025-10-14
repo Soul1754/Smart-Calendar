@@ -61,6 +61,12 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something broke!");
 });
 
+app.get("/health", (req, res) => {
+  // You can add logic here to check DB connection if needed
+  res.status(200).send("OK");
+});
+
+
 // Export handler for serverless platforms (Vercel)
 if (process.env.NODE_ENV === "production" && process.env.VERCEL) {
   module.exports = serverless(app);

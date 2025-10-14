@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs");
 const User = require("../models/User");
 
 // Helper function to generate JWT token
@@ -26,8 +26,8 @@ router.post("/register", async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     // Create new user
     const newUser = new User({
@@ -69,7 +69,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Check if password is correct
-    const isMatch = await bcrypt.compare(password, user.password || "");
+    const isMatch = await bcryptjs.compare(password, user.password || "");
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }

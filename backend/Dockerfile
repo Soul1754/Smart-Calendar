@@ -1,5 +1,5 @@
 # Backend Dockerfile
-FROM node:18-alpine
+FROM node:18-bullseye AS builder
 WORKDIR /app
 
 # Ensure production build installs reproducibly

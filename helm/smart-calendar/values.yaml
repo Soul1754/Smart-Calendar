@@ -14,7 +14,7 @@ backend:
 
   image:
     # Docker image repository for backend
-    repository: your-dockerhub-username/smart-calendar-backend
+    repository: s0ul1754/smart-calendar-backend
     # Image pull policy
     pullPolicy: IfNotPresent
     # Image tag (overrides Chart appVersion)
@@ -83,7 +83,7 @@ frontend:
 
   image:
     # Docker image repository for frontend
-    repository: your-dockerhub-username/smart-calendar-frontend
+    repository: s0ul1754/smart-calendar-frontend
     # Image pull policy
     pullPolicy: IfNotPresent
     # Image tag (overrides Chart appVersion)
@@ -150,19 +150,19 @@ mongodb:
   # IMPORTANT: Base64-encode your MongoDB connection string before adding here
   # Example: echo -n 'mongodb+srv://user:pass@cluster.mongodb.net/dbname?retryWrites=true&w=majority' | base64
   # For production, use Helm secrets or external secret management (e.g., Sealed Secrets, Vault)
-  uri: "bW9uZ29kYitzcnY6Ly91c2VyOnBhc3NAY2x1c3Rlci5tb25nb2RiLm5ldC9kYm5hbWU/cmV0cnlXcml0ZXM9dHJ1ZSZ3PW1ham9yaXR5"
+  uri: "bW9uZ29kYitzcnY6Ly9zbWFydGNhbGVuZGFyZXplc3RfZGJfdXNlcjpMTFV5MExibVZNSU95WllmQHNtYXJ0Y2FsZW5kYXIubzViZGFpZS5tb25nb2RiLm5ldC8/cmV0cnlXcml0ZXM9dHJ1ZSZ3PW1ham9yaXR5JmFwcE5hbWU9U21hcnRDYWxlbmRhcg=="
 
 # Ingress configuration
 ingress:
   # Enable/disable Ingress resource creation
   enabled: true
-  
+
   # Ingress class name (e.g., nginx, traefik)
   className: "nginx"
-  
+
   # Hostname for the application
   host: "smart-calendar.local"
-  
+
   # Ingress annotations
   annotations:
     # Example nginx annotations
@@ -170,7 +170,7 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     # Uncomment for production with cert-manager
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  
+
   # TLS configuration
   tls:
     # Enable TLS
@@ -203,7 +203,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: false
 
 # Additional labels to apply to all resources
@@ -211,3 +211,27 @@ additionalLabels: {}
 # Example:
 #   environment: production
 #   team: platform
+
+# ngrok Tunnel configuration (requires ngrok Kubernetes Operator)
+ngrok:
+  # Enable/disable ngrok tunnel creation
+  enabled: true
+
+  # Tunnel name (will be prefixed with release name)
+  tunnelName: "smart-calendar-tunnel"
+
+  # Target service configuration
+  target:
+    # Service name to expose (backend or frontend)
+    serviceName: "smart-calendar-backend"
+    # Service port to expose
+    servicePort: 5001
+
+  # Protocol (http or tcp)
+  protocol: "http"
+
+  # Additional tunnel labels
+  labels: {}
+
+  # Additional tunnel annotations
+  annotations: {}
