@@ -97,7 +97,7 @@ export async function logout(): Promise<void> {
  */
 export function getGoogleAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/google`;
+  return `${baseUrl}/auth/google/callback`;
 }
 
 /**
@@ -107,7 +107,7 @@ export function getGoogleAuthUrl(): string {
  */
 export function getMicrosoftAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/microsoft`;
+  return `${baseUrl}/auth/microsoft/callback`;
 }
 
 export async function disconnectCalendar(
