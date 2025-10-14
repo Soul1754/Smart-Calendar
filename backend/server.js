@@ -16,10 +16,13 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
-    allowedHeaders: ["Content-Type", "x-auth-token"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-auth-token", "Authorization"],
+    exposedHeaders: ["x-auth-token"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 app.use(passport.initialize());
