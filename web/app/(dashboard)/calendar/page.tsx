@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/AuthProvider";
 import Link from "next/link";
+import { FloatingChatbot } from "@/components/chat";
 
 interface CalendarEvent {
   id: string;
@@ -27,6 +28,15 @@ interface CalendarEvent {
   attendees?: Array<{ email: string; displayName?: string; responseStatus?: string }>;
 }
 
+/**
+ * Render the calendar page UI with navigation, view toggling, event fetching, slot selection, and an event details modal.
+ *
+ * The component fetches and refreshes calendar events, transforms API data for the calendar view, handles slot and event selection
+ * (navigating to meeting creation or opening the details modal), and conditionally renders loading, error, no-calendar, empty-view,
+ * or populated calendar states. It also includes a floating chatbot.
+ *
+ * @returns The CalendarPage React element containing the toolbar, calendar grid, event details modal, and floating chatbot.
+ */
 export default function CalendarPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -281,6 +291,7 @@ export default function CalendarPage() {
         {/* Event Details Modal */}
         <EventDetailsModal isOpen={isModalOpen} onClose={handleCloseModal} event={selectedEvent} />
       </div>
+      <FloatingChatbot />
     </div>
   );
 }

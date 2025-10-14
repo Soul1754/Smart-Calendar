@@ -9,51 +9,99 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback",
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        (process.env.BACKEND_URL || "") + "/auth/google/callback",
       scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
     },
     async (accessToken, refreshToken, profile, done) => {
       console.log("Google OAuth callback triggered");
-      console.log(
-        "Client ID:",
-        process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing"
-      );
+
+      const configured = {
+        clientId: !!process.env.GOOGLE_CLIENT_ID,
+        clientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      };
+      console.log("Client ID:", configured.clientId ? "Configured" : "Missing");
       console.log(
         "Client Secret:",
-        process.env.GOOGLE_CLIENT_SECRET ? "Configured" : "Missing"
+        configured.clientSecret ? "Configured" : "Missing"
       );
 
-      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      if (!configured.clientId || !configured.clientSecret) {
         console.error("Google OAuth credentials are missing!");
         return done(
           new Error("Google OAuth credentials are not configured properly"),
           null
         );
       }
+
+      // Normalize email to avoid duplicate-key issues due to case sensitivity
+      const email =
+        profile.emails && profile.emails[0] && profile.emails[0].value
+          ? profile.emails[0].value.toLowerCase()
+          : null;
+
       try {
-        // Check if user already exists
-        let user = await User.findOne({ googleId: profile.id });
+        // Try to find existing user by googleId OR by email (if provided).
+        // This avoids creating a new user when an account with the same email
+        // already exists (e.g., user registered via email/password earlier).
+        let user = null;
+        if (profile.id) {
+          user = await User.findOne({
+            $or: [{ googleId: profile.id }, { email }],
+          });
+        } else if (email) {
+          user = await User.findOne({ email });
+        }
 
         if (user) {
-          // Update tokens
-          user.googleAccessToken = accessToken;
-          user.googleRefreshToken = refreshToken;
+          // Attach Google identifiers/tokens to the existing account if missing
+          user.googleId = user.googleId || profile.id;
+          if (accessToken) user.googleAccessToken = accessToken;
+          if (refreshToken) user.googleRefreshToken = refreshToken;
+          // Ensure email and name are populated
+          if (email && !user.email) user.email = email;
+          if (profile.displayName && !user.name)
+            user.name = profile.displayName;
+
           await user.save();
           return done(null, user);
         }
 
-        // Create new user
-        user = new User({
+        // No existing user found — create a new user record
+        const newUserData = {
           googleId: profile.id,
-          email: profile.emails[0].value,
+          email: email,
           name: profile.displayName,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
+        };
+        if (accessToken) newUserData.googleAccessToken = accessToken;
+        if (refreshToken) newUserData.googleRefreshToken = refreshToken;
 
-        await user.save();
-        return done(null, user);
+        try {
+          const newUser = new User(newUserData);
+          await newUser.save();
+          return done(null, newUser);
+        } catch (createErr) {
+          // Handle race condition / duplicate-key (E11000) where another process
+          // created the user with the same email between the find and create steps.
+          if (createErr && createErr.code === 11000 && email) {
+            console.warn(
+              "Duplicate key on user create, retrying update for email:",
+              email
+            );
+            const existing = await User.findOne({ email });
+            if (existing) {
+              existing.googleId = existing.googleId || profile.id;
+              if (accessToken) existing.googleAccessToken = accessToken;
+              if (refreshToken) existing.googleRefreshToken = refreshToken;
+              await existing.save();
+              return done(null, existing);
+            }
+          }
+          throw createErr;
+        }
       } catch (err) {
+        console.error("Error in GoogleStrategy callback:", err);
         return done(err, null);
       }
     }
@@ -66,34 +114,69 @@ passport.use(
     {
       clientID: process.env.MICROSOFT_CLIENT_ID,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-      callbackURL: "/auth/microsoft/callback",
+      callbackURL:
+        process.env.MICROSOFT_CALLBACK_URL ||
+        (process.env.BACKEND_URL || "") + "/auth/microsoft/callback",
       scope: ["user.read", "calendars.read", "calendars.readwrite"],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Check if user already exists
-        let user = await User.findOne({ microsoftId: profile.id });
+        const email =
+          profile.emails && profile.emails[0] && profile.emails[0].value
+            ? profile.emails[0].value.toLowerCase()
+            : null;
+
+        let user = null;
+        if (profile.id) {
+          user = await User.findOne({
+            $or: [{ microsoftId: profile.id }, { email }],
+          });
+        } else if (email) {
+          user = await User.findOne({ email });
+        }
 
         if (user) {
-          // Update tokens
-          user.microsoftAccessToken = accessToken;
-          user.microsoftRefreshToken = refreshToken;
+          user.microsoftId = user.microsoftId || profile.id;
+          if (accessToken) user.microsoftAccessToken = accessToken;
+          if (refreshToken) user.microsoftRefreshToken = refreshToken;
+          if (email && !user.email) user.email = email;
+          if (profile.displayName && !user.name)
+            user.name = profile.displayName;
           await user.save();
           return done(null, user);
         }
 
-        // Create new user
-        user = new User({
+        const newUserData = {
           microsoftId: profile.id,
-          email: profile.emails[0].value,
+          email: email,
           name: profile.displayName,
-          microsoftAccessToken: accessToken,
-          microsoftRefreshToken: refreshToken,
-        });
+        };
+        if (accessToken) newUserData.microsoftAccessToken = accessToken;
+        if (refreshToken) newUserData.microsoftRefreshToken = refreshToken;
 
-        await user.save();
-        return done(null, user);
+        try {
+          const newUser = new User(newUserData);
+          await newUser.save();
+          return done(null, newUser);
+        } catch (createErr) {
+          if (createErr && createErr.code === 11000 && email) {
+            console.warn(
+              "Duplicate key on user create (microsoft), retrying update for email:",
+              email
+            );
+            const existing = await User.findOne({ email });
+            if (existing) {
+              existing.microsoftId = existing.microsoftId || profile.id;
+              if (accessToken) existing.microsoftAccessToken = accessToken;
+              if (refreshToken) existing.microsoftRefreshToken = refreshToken;
+              await existing.save();
+              return done(null, existing);
+            }
+          }
+          throw createErr;
+        }
       } catch (err) {
+        console.error("Error in MicrosoftStrategy callback:", err);
         return done(err, null);
       }
     }

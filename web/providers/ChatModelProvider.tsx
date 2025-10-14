@@ -1,11 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface ChatModel {
   id: string;
   name: string;
   provider: string;
+  contextWindow?: number;
 }
 
 interface ChatModelContextType {
@@ -15,19 +16,72 @@ interface ChatModelContextType {
 }
 
 const defaultModels: ChatModel[] = [
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "groq" },
-  { id: "llama-3.1-70b-versatile", name: "Llama 3.1 70B", provider: "groq" },
-  { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", provider: "groq" },
+  {
+    id: "llama-3.1-8b-instant",
+    name: "Llama 3.1 8B Instant",
+    provider: "Meta",
+    contextWindow: 131072,
+  },
+  {
+    id: "llama-3.3-70b-versatile",
+    name: "Llama 3.3 70B Versatile",
+    provider: "Meta",
+    contextWindow: 131072,
+  },
+  {
+    id: "meta-llama/llama-guard-4-12b",
+    name: "Llama Guard 4 12B",
+    provider: "Meta",
+    contextWindow: 131072,
+  },
+  {
+    id: "openai/gpt-oss-120b",
+    name: "GPT OSS 120B",
+    provider: "OpenAI",
+    contextWindow: 131072,
+  },
+  {
+    id: "openai/gpt-oss-20b",
+    name: "GPT OSS 20B",
+    provider: "OpenAI",
+    contextWindow: 131072,
+  },
 ];
 
 const ChatModelContext = createContext<ChatModelContextType | undefined>(undefined);
 
+/**
+ * Provides ChatModelContext to descendants and manages the currently selected chat model.
+ *
+ * Initializes the selected model from localStorage in browser environments (falling back to the first default model)
+ * and persists any selection changes to localStorage. Exposes `selectedModel`, `selectModel`, and `availableModels`
+ * through the context value.
+ *
+ * @param children - React nodes that will receive the ChatModelContext
+ * @returns The ChatModelContext provider element containing the current selection, a selection updater, and the available models
+ */
 export function ChatModelProvider({ children }: { children: ReactNode }) {
-  const [selectedModel, setSelectedModel] = useState<ChatModel>(defaultModels[0]);
+  const [selectedModel, setSelectedModel] = useState<ChatModel>(() => {
+    // Load from localStorage on client side only
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("selectedModel");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return defaultModels[0];
+        }
+      }
+    }
+    return defaultModels[0];
+  });
   const [availableModels] = useState<ChatModel[]>(defaultModels);
 
   const selectModel = (model: ChatModel) => {
     setSelectedModel(model);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedModel", JSON.stringify(model));
+    }
   };
 
   const value = {

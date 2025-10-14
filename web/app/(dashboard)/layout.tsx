@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Navbar } from "@/components/layout/Navbar";
 
+
+/**
+ * Render the dashboard layout and enforce redirect to the login page for unauthenticated users.
+ *
+ * Shows a centered loading UI while the authentication state is being determined. If authentication is false and the user is not in the process of logging out, this component triggers a client-side redirect to "/login" and renders nothing. When the user is authenticated or currently logging out, it renders the Navbar and the provided page content inside the dashboard layout.
+ *
+ * @param children - The page content to render inside the dashboard's main area.
+ * @returns The dashboard layout element, a loading UI while auth is resolving, or `null` when redirecting to the login page.
+ */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, loading, loggingOut } = useAuth();
@@ -37,6 +46,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="dashboard-layout h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 overflow-hidden">{children}</main>
+      
+
+      
     </div>
   );
 }

@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const cors = require("cors");
 const dotenv = require("dotenv");
+// serverless handler for Vercel
+const serverless = require("serverless-http");
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +18,19 @@ app.use(cors());
 app.use(passport.initialize());
 
 // Configure Passport
+// Ensure passport config picks up callback URLs from env
+const backendBaseUrl =
+  process.env.BACKEND_URL && process.env.BACKEND_URL.trim()
+    ? process.env.BACKEND_URL
+    : "http://localhost:5001";
+
+process.env.GOOGLE_CALLBACK_URL =
+  process.env.GOOGLE_CALLBACK_URL ||
+  `${backendBaseUrl}/auth/google/callback`;
+
+process.env.MICROSOFT_CALLBACK_URL =
+  process.env.MICROSOFT_CALLBACK_URL ||
+  `${backendBaseUrl}/auth/microsoft/callback`;
 require("./config/passport");
 
 // Connect to MongoDB
@@ -36,8 +51,12 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something broke!");
 });
 
-// Start server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export handler for serverless platforms (Vercel)
+if (process.env.NODE_ENV === "production" && process.env.VERCEL) {
+  module.exports = serverless(app);
+} else {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}

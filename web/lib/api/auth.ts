@@ -85,11 +85,21 @@ export async function logout(): Promise<void> {
   }
 }
 
+/**
+ * Construct the Google OAuth callback URL using NEXT_PUBLIC_API_BASE_URL or "http://localhost:5001" as the base.
+ *
+ * @returns The full Google OAuth callback URL (e.g. `${baseUrl}/auth/google/callback`).
+ */
 export function getGoogleAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
   return `${baseUrl}/auth/google`;
 }
 
+/**
+ * Builds the absolute URL for initiating Microsoft OAuth with the API.
+ *
+ * @returns The absolute URL of the API's Microsoft authentication endpoint.
+ */
 export function getMicrosoftAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
   return `${baseUrl}/auth/microsoft`;
