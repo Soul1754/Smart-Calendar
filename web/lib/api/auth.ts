@@ -76,10 +76,14 @@ export async function getCurrentUser(tokenOverride?: string): Promise<{ user: Us
   const config: AxiosRequestConfig | undefined = tokenOverride
     ? { headers: { "x-auth-token": tokenOverride } }
     : undefined;
+  console.log("getCurrentUser: calling /auth/me with config", config);
   const res = await get<Partial<{ user: User }>>("/auth/me", config);
+  console.log("getCurrentUser: received response", res);
   if (!res || !res.user) {
+    console.error("getCurrentUser: validation failed, res:", res);
     throw new Error("User not found in /auth/me response");
   }
+  console.log("getCurrentUser: validation passed, returning user");
   return { user: res.user };
 }
 
@@ -104,8 +108,8 @@ export async function logout(): Promise<void> {
  * @returns The full Google OAuth URL (e.g. `${baseUrl}/auth/google`).
  */
 export function getGoogleAuthUrl(): string {
-  // Route through Next.js API to avoid ngrok interstitial and keep same-origin navigation
-  return `/api/auth/google`;
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
+  return `${baseUrl}/auth/google/callback`;
 }
 
 /**
@@ -114,7 +118,8 @@ export function getGoogleAuthUrl(): string {
  * @returns The absolute URL of the API's Microsoft authentication endpoint.
  */
 export function getMicrosoftAuthUrl(): string {
-  return `/api/auth/microsoft`;
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
+  return `${baseUrl}/auth/microsoft/callback`;
 }
 
 export async function disconnectCalendar(

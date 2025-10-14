@@ -8,7 +8,20 @@ export async function GET(_req: NextRequest) {
     if (!location) {
       return NextResponse.json({ message: "OAuth redirect not provided by API" }, { status: 502 });
     }
-    return NextResponse.redirect(location, { status: 302 });
+    
+    // Create redirect response
+    const redirectResponse = NextResponse.redirect(location, { status: 302 });
+    
+    // Forward any Set-Cookie headers from backend (for session state)
+    const cookies = resp.headers.getSetCookie?.() || 
+                   (resp.headers as any).raw?.()['set-cookie'] || 
+                   [];
+    
+    for (const cookie of cookies) {
+      redirectResponse.headers.append("set-cookie", cookie);
+    }
+    
+    return redirectResponse;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "OAuth initiation failed";
     return NextResponse.json({ message }, { status: 500 });
