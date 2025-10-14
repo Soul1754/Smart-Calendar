@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { post, get, put, setAuthToken, removeAuthToken } from "./client";
+import type { AxiosRequestConfig } from "axios";
 
 // Zod schemas for validation
 export const UserSchema = z.object({
@@ -72,10 +73,10 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
-  const config = tokenOverride
+  const config: AxiosRequestConfig | undefined = tokenOverride
     ? { headers: { "x-auth-token": tokenOverride } }
     : undefined;
-  const res = await get<Partial<{ user: User }>>("/auth/me", config as any);
+  const res = await get<Partial<{ user: User }>>("/auth/me", config);
   if (!res || !res.user) {
     throw new Error("User not found in /auth/me response");
   }
@@ -103,8 +104,8 @@ export async function logout(): Promise<void> {
  * @returns The full Google OAuth URL (e.g. `${baseUrl}/auth/google`).
  */
 export function getGoogleAuthUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/google`;
+  // Route through Next.js API to avoid ngrok interstitial and keep same-origin navigation
+  return `/api/auth/google`;
 }
 
 /**
@@ -113,8 +114,7 @@ export function getGoogleAuthUrl(): string {
  * @returns The absolute URL of the API's Microsoft authentication endpoint.
  */
 export function getMicrosoftAuthUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/microsoft`;
+  return `/api/auth/microsoft`;
 }
 
 export async function disconnectCalendar(
