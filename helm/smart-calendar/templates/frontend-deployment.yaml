@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "smart-calendar.frontend.name" . }}
+  labels:
+    {{- include "smart-calendar.frontend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "smart-calendar.frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "smart-calendar.frontend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "smart-calendar.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: frontend
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.frontend.containerPort }}
+          protocol: TCP
+        
+        # Environment variables
+        env:
+        {{- range .Values.frontend.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # Liveness probe - checks if container is alive
+        {{- if .Values.frontend.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.frontend.probes.liveness.path }}
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.frontend.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.frontend.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.frontend.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.frontend.probes.liveness.failureThreshold }}
+        {{- end }}
+        
+        # Readiness probe - checks if container is ready to serve traffic
+        {{- if .Values.frontend.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.frontend.probes.readiness.path }}
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.frontend.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.frontend.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.frontend.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.frontend.probes.readiness.failureThreshold }}
+        {{- end }}
+        
+        # Resource limits and requests
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+      
+      # Node selector for pod assignment
+      {{- with .Values.frontend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      # Affinity rules
+      {{- with .Values.frontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      # Tolerations
+      {{- with .Values.frontend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,129 @@
+🎉 Smart Calendar has been successfully deployed!
+
+=================================================
+📋 Release Information
+=================================================
+Release Name: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Chart Version: {{ .Chart.Version }}
+App Version: {{ .Chart.AppVersion }}
+
+=================================================
+🔍 Check Deployment Status
+=================================================
+
+View all resources:
+  kubectl get all -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Check pod status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+View logs:
+  Backend:  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=backend --tail=50 -f
+  Frontend: kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=frontend --tail=50 -f
+
+=================================================
+🌐 Access Your Application
+=================================================
+
+{{- if .Values.ingress.enabled }}
+Your application should be accessible at:
+
+  http://{{ .Values.ingress.host }}
+
+{{- if not (eq .Values.ingress.host "smart-calendar.local") }}
+Make sure your DNS is configured to point to your Ingress controller.
+{{- else }}
+
+📝 For local development (Minikube/Kind), add this to your /etc/hosts:
+
+  {{- if .Values.ingress.className }}
+  # Get Ingress IP first:
+  kubectl get ingress {{ include "smart-calendar.fullname" . }} -n {{ .Release.Namespace }}
+  
+  # Then add to /etc/hosts:
+  <INGRESS-IP> {{ .Values.ingress.host }}
+  {{- end }}
+{{- end }}
+
+API Endpoint: http://{{ .Values.ingress.host }}/api
+Frontend: http://{{ .Values.ingress.host }}
+
+{{- else }}
+Ingress is disabled. To access services, use port-forward:
+
+  Backend:  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "smart-calendar.backend.name" . }} {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }}
+  Frontend: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "smart-calendar.frontend.name" . }} {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+
+Then access:
+  Backend:  http://localhost:{{ .Values.backend.service.port }}
+  Frontend: http://localhost:{{ .Values.frontend.service.port }}
+{{- end }}
+
+=================================================
+⚙️  Configuration
+=================================================
+
+Backend replicas: {{ .Values.backend.replicaCount }}
+Frontend replicas: {{ .Values.frontend.replicaCount }}
+Backend image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+Frontend image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+
+=================================================
+🔐 Security Notes
+=================================================
+
+✓ MongoDB connection string is stored as a Kubernetes Secret
+✓ Pod security contexts are configured
+⚠️  For production, consider:
+    - Using external secret management (Vault, Sealed Secrets)
+    - Enabling TLS for Ingress
+    - Implementing network policies
+    - Setting up RBAC
+
+=================================================
+📚 Useful Commands
+=================================================
+
+Upgrade the release:
+  helm upgrade {{ .Release.Name }} ./helm/smart-calendar
+
+Rollback to previous version:
+  helm rollback {{ .Release.Name }}
+
+View release history:
+  helm history {{ .Release.Name }}
+
+Uninstall the release:
+  helm uninstall {{ .Release.Name }}
+
+Get values:
+  helm get values {{ .Release.Name }}
+
+=================================================
+🐛 Troubleshooting
+=================================================
+
+If pods are not starting:
+  kubectl describe pod -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Check events:
+  kubectl get events -n {{ .Release.Namespace }} --sort-by='.lastTimestamp'
+
+Verify secrets:
+  kubectl get secret {{ include "smart-calendar.mongodb.secretName" . }} -n {{ .Release.Namespace }}
+
+Test MongoDB connection from backend pod:
+  kubectl exec -n {{ .Release.Namespace }} -it deploy/{{ include "smart-calendar.backend.name" . }} -- sh
+
+=================================================
+📖 Documentation
+=================================================
+
+For more information, see:
+  - Chart README: helm/smart-calendar/README.md
+  - GitHub: https://github.com/Soul1754/Smart-Calendar
+
+=================================================
+
+Happy calendaring! 📅✨

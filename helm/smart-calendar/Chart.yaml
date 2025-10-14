@@ -1,0 +1,17 @@
+apiVersion: v2
+name: smart-calendar
+description: A Helm chart for Smart Calendar - Two-tier application with Next.js frontend and Node.js/Express backend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - smart-calendar
+  - nextjs
+  - nodejs
+  - express
+  - mongodb
+maintainers:
+  - name: Smart Calendar Team
+    email: smartcalendar.ezest@gmail.com
+sources:
+  - https://github.com/Soul1754/Smart-Calendar
