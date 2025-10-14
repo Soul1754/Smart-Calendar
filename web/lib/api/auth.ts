@@ -71,8 +71,15 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   return response;
 }
 
-export async function getCurrentUser(): Promise<{ user: User }> {
-  return get<{ user: User }>("/auth/me");
+export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
+  const config = tokenOverride
+    ? { headers: { "x-auth-token": tokenOverride } }
+    : undefined;
+  const res = await get<Partial<{ user: User }>>("/auth/me", config as any);
+  if (!res || !res.user) {
+    throw new Error("User not found in /auth/me response");
+  }
+  return { user: res.user };
 }
 
 /**

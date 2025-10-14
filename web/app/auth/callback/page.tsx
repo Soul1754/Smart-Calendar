@@ -35,8 +35,8 @@ function AuthCallbackContent() {
         setAuthToken(token);
 
         // Fetch user data with the token
-        const { getCurrentUser } = await import("@/lib/api/auth");
-        const { user } = await getCurrentUser();
+  const { getCurrentUser } = await import("@/lib/api/auth");
+  const { user } = await getCurrentUser(token);
 
         // Now login with both token and user data
         login(token, user);
