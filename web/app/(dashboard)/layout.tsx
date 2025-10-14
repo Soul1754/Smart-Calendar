@@ -7,12 +7,12 @@ import { Navbar } from "@/components/layout/Navbar";
 
 
 /**
- * Render the dashboard layout and enforce redirect to the login page for unauthenticated users.
+ * Renders the dashboard layout and redirects unauthenticated users to the login page.
  *
- * Shows a centered loading UI while the authentication state is being determined. If authentication is false and the user is not in the process of logging out, this component triggers a client-side redirect to "/login" and renders nothing. When the user is authenticated or currently logging out, it renders the Navbar and the provided page content inside the dashboard layout.
+ * Displays a centered loading UI while the authentication state is being determined. If authentication is resolved as unauthenticated and the user is not logging out, triggers a client-side redirect to "/login" and returns `null`. When the user is authenticated or currently logging out, renders the Navbar and the provided page content inside the dashboard layout.
  *
  * @param children - The page content to render inside the dashboard's main area.
- * @returns The dashboard layout element, a loading UI while auth is resolving, or `null` when redirecting to the login page.
+ * @returns The dashboard layout element when authenticated or logging out, a loading UI while authentication is resolving, or `null` when redirecting to the login page.
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();

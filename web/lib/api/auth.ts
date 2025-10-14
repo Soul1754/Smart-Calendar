@@ -75,6 +75,11 @@ export async function getCurrentUser(): Promise<{ user: User }> {
   return get<{ user: User }>("/auth/me");
 }
 
+/**
+ * Clears authentication state for the current client.
+ *
+ * Removes the stored authentication token and, if running in a browser, removes the "user" entry from localStorage.
+ */
 export async function logout(): Promise<void> {
   // Clear token from storage
   removeAuthToken();
@@ -86,9 +91,9 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Construct the Google OAuth callback URL using NEXT_PUBLIC_API_BASE_URL or "http://localhost:5001" as the base.
+ * Build the Google OAuth URL using NEXT_PUBLIC_API_BASE_URL or "http://localhost:5001" as the base.
  *
- * @returns The full Google OAuth callback URL (e.g. `${baseUrl}/auth/google/callback`).
+ * @returns The full Google OAuth URL (e.g. `${baseUrl}/auth/google`).
  */
 export function getGoogleAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
@@ -120,6 +125,12 @@ export interface UserPreferences {
   [key: string]: unknown;
 }
 
+/**
+ * Update the current user's preferences.
+ *
+ * @param preferences - Preferences to set; may include `defaultCalendar` and `workingHours` (`start`, `end`)
+ * @returns An object containing the updated `user`
+ */
 export async function updateUserPreferences(preferences: UserPreferences): Promise<{ user: User }> {
   return put<{ user: User }>("/auth/preferences", preferences);
 }

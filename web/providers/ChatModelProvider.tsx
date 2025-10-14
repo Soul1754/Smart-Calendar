@@ -51,14 +51,13 @@ const defaultModels: ChatModel[] = [
 const ChatModelContext = createContext<ChatModelContextType | undefined>(undefined);
 
 /**
- * Provides ChatModelContext to descendants and manages the currently selected chat model.
+ * Provide chat model context to descendants and manage the currently selected chat model.
  *
  * Initializes the selected model from localStorage in browser environments (falling back to the first default model)
- * and persists any selection changes to localStorage. Exposes `selectedModel`, `selectModel`, and `availableModels`
- * through the context value.
+ * and persists selection changes to localStorage. The context value exposes `selectedModel`, `selectModel`, and `availableModels`.
  *
  * @param children - React nodes that will receive the ChatModelContext
- * @returns The ChatModelContext provider element containing the current selection, a selection updater, and the available models
+ * @returns The ChatModelContext provider element supplying `selectedModel`, `selectModel`, and `availableModels`
  */
 export function ChatModelProvider({ children }: { children: ReactNode }) {
   const [selectedModel, setSelectedModel] = useState<ChatModel>(() => {
@@ -93,6 +92,12 @@ export function ChatModelProvider({ children }: { children: ReactNode }) {
   return <ChatModelContext.Provider value={value}>{children}</ChatModelContext.Provider>;
 }
 
+/**
+ * Provides access to the ChatModel context created by ChatModelProvider.
+ *
+ * @returns The context object containing `selectedModel`, `selectModel`, and `availableModels`.
+ * @throws Error if the hook is called outside of a ChatModelProvider.
+ */
 export function useChatModel() {
   const context = useContext(ChatModelContext);
   if (context === undefined) {
