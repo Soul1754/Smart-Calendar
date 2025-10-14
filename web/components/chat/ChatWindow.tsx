@@ -253,12 +253,17 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
               <div className="text-sm">{formatMessage(message.text)}</div>
 
               {/* Follow-up indicator */}
-              {message.followUp && message.pending && (
-                <div className="mt-2 text-xs rounded p-2 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border border-yellow-500/20">
-                  Awaiting:{" "}
-                  {Array.isArray(message.pending) ? message.pending.join(", ") : message.pending}
-                </div>
-              )}
+              {message.followUp &&
+                (Array.isArray(message.pending)
+                  ? message.pending.length > 0
+                  : message.pending === true) && (
+                  <div className="mt-2 text-xs rounded p-2 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border border-yellow-500/20">
+                    Awaiting:{" "}
+                    {Array.isArray(message.pending)
+                      ? message.pending.join(", ")
+                      : "Awaiting response…"}
+                  </div>
+                )}
 
               {/* ✅ Collected params (type-safe) */}
               {message.collectedParams && message.followUp && (

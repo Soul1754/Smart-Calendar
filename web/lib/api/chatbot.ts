@@ -25,7 +25,8 @@ export const ChatMessageResponseSchema = z.object({
     })
     .optional(),
   followUp: z.string().optional(),
-  pending: z.union([z.boolean(), z.array(z.string())]).optional(),
+  // Pending can be either a boolean or an array of strings. Use array type first in the union to match runtime expectations.
+  pending: z.union([z.array(z.string()), z.boolean()]).optional(),
   collectedParams: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   availableSlots: z
     .array(
@@ -56,7 +57,8 @@ export interface ChatMessage {
     }>;
   };
   followUp?: string;
-  pending?: boolean | string[];
+  // explicit union order: string[] | boolean
+  pending?: string[] | boolean;
   collectedParams?: Record<string, string | number | boolean>;
   availableSlots?: Array<{
     start: string;
