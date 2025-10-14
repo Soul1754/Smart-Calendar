@@ -19,14 +19,24 @@ app.use(passport.initialize());
 
 // Configure Passport
 // Ensure passport config picks up callback URLs from env
-const backendBaseUrl =
+// Prefer an NGROK_URL (public tunnel) for testing, then BACKEND_URL, then localhost
+const rawNgrok =
+  process.env.NGROK_URL && process.env.NGROK_URL.trim()
+    ? process.env.NGROK_URL.trim()
+    : null;
+const rawBackend =
   process.env.BACKEND_URL && process.env.BACKEND_URL.trim()
-    ? process.env.BACKEND_URL
-    : "http://localhost:5001";
+    ? process.env.BACKEND_URL.trim()
+    : null;
+let backendBaseUrl = rawNgrok || rawBackend || "http://localhost:5001";
+// Strip trailing slashes for consistency
+backendBaseUrl = backendBaseUrl.replace(/\/+$/, "");
+
+// Export canonical BACKEND_URL for use in other modules
+process.env.BACKEND_URL = process.env.BACKEND_URL || backendBaseUrl;
 
 process.env.GOOGLE_CALLBACK_URL =
-  process.env.GOOGLE_CALLBACK_URL ||
-  `${backendBaseUrl}/auth/google/callback`;
+  process.env.GOOGLE_CALLBACK_URL || `${backendBaseUrl}/auth/google/callback`;
 
 process.env.MICROSOFT_CALLBACK_URL =
   process.env.MICROSOFT_CALLBACK_URL ||
