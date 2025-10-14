@@ -212,26 +212,28 @@ additionalLabels: {}
 #   environment: production
 #   team: platform
 
-# ngrok Tunnel configuration (requires ngrok Kubernetes Operator)
+# ngrok Tunnel configuration (requires ngrok Kubernetes Operator v0.18+)
+# IMPORTANT: You MUST create a static domain in your ngrok dashboard first!
+# Go to: https://dashboard.ngrok.com/cloud-edge/domains
+# Then set the domain below (e.g., "your-domain-name.ngrok-free.app")
 ngrok:
   # Enable/disable ngrok tunnel creation
-  enabled: true
+  enabled: false
 
-  # Tunnel name (will be prefixed with release name)
-  tunnelName: "smart-calendar-tunnel"
+  # Static ngrok domain (REQUIRED - get this from your ngrok dashboard)
+  # Free accounts get one static domain like "random-name.ngrok-free.app"
+  # Example: "smart-calendar-123.ngrok-free.app"
+  domain: "dermatoid-osmic-ebonie.ngrok-free.dev"
 
   # Target service configuration
   target:
     # Service name to expose (backend or frontend)
-    serviceName: "smart-calendar-backend"
+    serviceName: "backend"
     # Service port to expose
     servicePort: 5001
 
-  # Protocol (http or tcp)
-  protocol: "http"
-
-  # Additional tunnel labels
-  labels: {}
-
-  # Additional tunnel annotations
-  annotations: {}
+  # Additional ngrok annotations (optional)
+  annotations:
+    {}
+    # Example: Add description
+    # k8s.ngrok.com/description: "Smart Calendar API"

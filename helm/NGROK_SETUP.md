@@ -1,215 +1,195 @@
-# ngrok Tunnel Setup with Helm
+# ngrok Setup Guide for Smart Calendar
+
+## Overview
+
+This guide will help you expose your Smart Calendar application publicly using ngrok's Kubernetes Operator with a **FREE ngrok account**.
 
 ## Prerequisites
 
-Ensure the ngrok Kubernetes Operator is installed in your cluster:
+✅ ngrok Kubernetes Operator installed (already done in your cluster)  
+✅ ngrok account (free or paid)  
+✅ Static ngrok domain from your dashboard
 
-```bash
-# Install ngrok operator (if not already installed)
-kubectl apply -f https://github.com/ngrok/ngrok-operator/releases/latest/download/ngrok-operator.yaml
+---
 
-# Verify operator is running
-kubectl get pods -n ngrok-operator
-```
+## Step 1: Get Your Static ngrok Domain
 
-## Configuration
+### For FREE ngrok accounts:
 
-The ngrok tunnel is configured in `values.yaml`:
+1. **Go to ngrok Dashboard:**
+
+   ```
+   https://dashboard.ngrok.com/cloud-edge/domains
+   ```
+
+2. **Create a Free Static Domain:**
+
+   - Click "New Domain" or "Create Domain"
+   - Free accounts get ONE static domain like: `random-name-12345.ngrok-free.app`
+   - Copy this domain name (you'll need it in Step 3)
+
+3. **Example domain format:**
+   ```
+   smart-calendar-abc123.ngrok-free.app
+   ```
+
+> **Note:** Free accounts get one static domain. If you need more, you'll need a paid plan.
+
+---
+
+## Step 2: Update Helm Values
+
+Edit `helm/smart-calendar/values.yaml` and update the ngrok section:
 
 ```yaml
 ngrok:
+  # Enable ngrok
   enabled: true
-  tunnelName: "smart-calendar-tunnel"
+
+  # YOUR static domain from Step 1
+  domain: "smart-calendar-abc123.ngrok-free.app" # ← CHANGE THIS!
+
+  # Target service configuration
   target:
-    serviceName: "smart-calendar-backend" # or "smart-calendar-frontend"
-    servicePort: 5001 # or 3000 for frontend
-  protocol: "http"
+    # Expose backend API
+    serviceName: "backend"
+    servicePort: 5001
+
+    # OR expose frontend (uncomment below and comment above)
+    # serviceName: "frontend"
+    # servicePort: 3000
 ```
 
-## Install Chart with ngrok Tunnel
+---
 
-### Option 1: Install with default values
+## Step 3: Deploy with ngrok
 
-```bash
-helm install smart-calendar ./helm/smart-calendar
-```
-
-### Option 2: Install with custom values
+### Option A: Fresh Install
 
 ```bash
 helm install smart-calendar ./helm/smart-calendar \
   --set ngrok.enabled=true \
-  --set ngrok.target.serviceName=backend \
-  --set ngrok.target.servicePort=5001
+  --set ngrok.domain="YOUR-DOMAIN.ngrok-free.app"
 ```
 
-### Option 3: Install with custom values file
+### Option B: Upgrade Existing Release
 
 ```bash
-# Create custom-values.yaml with your overrides
-helm install smart-calendar ./helm/smart-calendar -f custom-values.yaml
-```
-
-## View the Public ngrok URL
-
-After installation, get the tunnel status and public URL:
-
-```bash
-# List all tunnels
-kubectl get tunnels
-
-# Get detailed tunnel information
-kubectl describe tunnel smart-calendar-smart-calendar-tunnel
-
-# Get the public URL directly
-kubectl get tunnel smart-calendar-smart-calendar-tunnel -o jsonpath='{.status.url}'
-```
-
-## Expose Backend vs Frontend
-
-### To expose the backend API:
-
-```yaml
-ngrok:
-  enabled: true
-  target:
-    serviceName: "backend"
-    servicePort: 5001
-```
-
-### To expose the frontend:
-
-```yaml
-ngrok:
-  enabled: true
-  target:
-    serviceName: "frontend"
-    servicePort: 3000
-```
-
-## Upgrade Tunnel Configuration
-
-```bash
-# Update values and upgrade
 helm upgrade smart-calendar ./helm/smart-calendar \
-  --set ngrok.target.serviceName=frontend \
-  --set ngrok.target.servicePort=3000
-
-# Or upgrade with custom values file
-helm upgrade smart-calendar ./helm/smart-calendar -f custom-values.yaml
+  --set ngrok.enabled=true \
+  --set ngrok.domain="YOUR-DOMAIN.ngrok-free.app"
 ```
 
-## Disable ngrok Tunnel
+---
+
+## Step 4: Verify Deployment
+
+### Check Ingress Status
 
 ```bash
-# Disable tunnel without uninstalling the chart
-helm upgrade smart-calendar ./helm/smart-calendar --set ngrok.enabled=false
+kubectl get ingress smart-calendar-ngrok
 ```
 
-## Uninstall
+Expected output:
+
+```
+NAME                     CLASS   HOSTS                              ADDRESS   PORTS   AGE
+smart-calendar-ngrok     ngrok   your-domain.ngrok-free.app         ...       80      10s
+```
+
+### Check Ingress Details
 
 ```bash
-# Uninstall the entire chart (including tunnel)
-helm uninstall smart-calendar
-
-# Verify tunnel is removed
-kubectl get tunnels
+kubectl describe ingress smart-calendar-ngrok
 ```
+
+Look for:
+
+- ✅ No error events
+- ✅ Host matches your domain
+- ✅ Backend service is correct
+
+---
+
+## Step 5: Test Your Public URL
+
+### Access Your Application
+
+```bash
+# Your backend will be available at:
+https://YOUR-DOMAIN.ngrok-free.app
+
+# Test health endpoint
+curl https://YOUR-DOMAIN.ngrok-free.app/health
+
+# Or open in browser
+open https://YOUR-DOMAIN.ngrok-free.app
+```
+
+### For Free Accounts
+
+Free ngrok domains show a warning page first:
+
+1. User sees ngrok interstitial page
+2. Click "Visit Site" button
+3. Redirected to your application
+
+---
+
+## Quick Commands Reference
+
+```bash
+# Get your ngrok domain from dashboard first!
+# Then run:
+
+# Deploy with ngrok enabled
+helm upgrade smart-calendar ./helm/smart-calendar \
+  --set ngrok.enabled=true \
+  --set ngrok.domain="YOUR-DOMAIN.ngrok-free.app"
+
+# Check status
+kubectl get ingress smart-calendar-ngrok
+
+# Test endpoint
+curl https://YOUR-DOMAIN.ngrok-free.app/health
+
+# View logs
+kubectl logs -l app.kubernetes.io/component=backend --tail=50
+```
+
+---
 
 ## Troubleshooting
 
-### Tunnel not created
+### Issue: "404 Tunnel not found"
+
+**Solution:**
+
+1. Verify domain exists in ngrok dashboard
+2. Check domain spelling in values.yaml
+3. Verify target service exists:
+   ```bash
+   kubectl get svc | grep smart-calendar
+   ```
+
+---
+
+### Issue: Cannot reach application
+
+**Check pods:**
 
 ```bash
-# Check if ngrok operator is running
-kubectl get pods -n ngrok-operator
-
-# Check tunnel events
-kubectl describe tunnel smart-calendar-smart-calendar-tunnel
-
-# Check operator logs
-kubectl logs -n ngrok-operator -l app=ngrok-operator
+kubectl get pods -l app.kubernetes.io/name=smart-calendar
+kubectl logs -l app.kubernetes.io/component=backend --tail=50
 ```
 
-### Tunnel status shows "Error"
+---
 
-```bash
-# Check tunnel status
-kubectl get tunnel smart-calendar-smart-calendar-tunnel -o yaml
+## Summary
 
-# Common issues:
-# 1. Target service doesn't exist
-# 2. Target port is incorrect
-# 3. ngrok account limits exceeded
-```
+✅ Create static domain in ngrok dashboard  
+✅ Update `values.yaml` with your domain  
+✅ Deploy with `helm upgrade`  
+✅ Access via `https://your-domain.ngrok-free.app`
 
-### Service not accessible via ngrok URL
-
-```bash
-# Verify target service is running
-kubectl get svc
-
-# Check backend/frontend pods are healthy
-kubectl get pods
-
-# Test service locally first
-kubectl port-forward svc/smart-calendar-backend 5001:5001
-curl http://localhost:5001/health
-```
-
-## Advanced Configuration
-
-### Multiple Tunnels
-
-To expose both backend and frontend, install the chart twice with different release names:
-
-```bash
-# Expose backend
-helm install smart-calendar-api ./helm/smart-calendar \
-  --set frontend.enabled=false \
-  --set ngrok.target.serviceName=backend \
-  --set ngrok.target.servicePort=5001
-
-# Expose frontend
-helm install smart-calendar-web ./helm/smart-calendar \
-  --set backend.enabled=false \
-  --set ngrok.target.serviceName=frontend \
-  --set ngrok.target.servicePort=3000
-```
-
-### Custom Tunnel Labels
-
-```yaml
-ngrok:
-  enabled: true
-  labels:
-    environment: production
-    team: platform
-  annotations:
-    description: "Smart Calendar API Tunnel"
-```
-
-## Example: Complete Installation Flow
-
-```bash
-# 1. Install ngrok operator (if needed)
-kubectl apply -f https://github.com/ngrok/ngrok-operator/releases/latest/download/ngrok-operator.yaml
-
-# 2. Wait for operator to be ready
-kubectl wait --for=condition=available --timeout=120s deployment/ngrok-operator -n ngrok-operator
-
-# 3. Install Smart Calendar with ngrok tunnel
-helm install smart-calendar ./helm/smart-calendar
-
-# 4. Wait for tunnel to be ready
-kubectl wait --for=condition=Ready --timeout=60s tunnel smart-calendar-smart-calendar-tunnel
-
-# 5. Get the public URL
-NGROK_URL=$(kubectl get tunnel smart-calendar-smart-calendar-tunnel -o jsonpath='{.status.url}')
-echo "Smart Calendar is accessible at: $NGROK_URL"
-
-# 6. Test the endpoint
-curl $NGROK_URL/health  # for backend
-# or
-curl $NGROK_URL  # for frontend
-```
+Happy tunneling! 🚀

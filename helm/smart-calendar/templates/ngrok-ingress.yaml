@@ -1,0 +1,26 @@
+{{- if .Values.ngrok.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "smart-calendar.fullname" . }}-ngrok
+  labels:
+    {{- include "smart-calendar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ngrok-ingress
+  {{- with .Values.ngrok.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: ngrok
+  rules:
+    - host: {{ .Values.ngrok.domain | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "smart-calendar.fullname" . }}-{{ .Values.ngrok.target.serviceName }}
+                port:
+                  number: {{ .Values.ngrok.target.servicePort }}
+{{- end }}

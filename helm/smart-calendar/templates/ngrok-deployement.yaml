@@ -1,0 +1,39 @@
+{{- if .Values.ngrok.enabled }}
+---
+# This is an optional test deployment - not needed if you're exposing existing services
+# Uncomment only if you want to deploy the ngrok-hello test service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ngrok-hello
+#   namespace: {{ .Release.Namespace }}
+# spec:
+#   ports:
+#     - name: http
+#       port: 80
+#       targetPort: 8002
+#   selector:
+#     app: ngrok-hello
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: ngrok-hello
+#   namespace: {{ .Release.Namespace }}
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: ngrok-hello
+#   template:
+#     metadata:
+#       labels:
+#         app: ngrok-hello
+#     spec:
+#       containers:
+#         - name: backend
+#           image: shubcodes/ngrok-hello:latest
+#           ports:
+#             - name: http
+#               containerPort: 8002
+{{- end }}
