@@ -7,8 +7,11 @@ const User = require("../models/User");
 
 // Helper function to generate JWT token
 const generateToken = (user) => {
+  const id = (user && (user._id || user.id))
+    ? String(user._id || user.id)
+    : undefined;
   return jwt.sign(
-    { id: user.id, email: user.email },
+    { id, email: user && user.email },
     process.env.JWT_SECRET || "your_jwt_secret",
     { expiresIn: "7d" }
   );
@@ -132,11 +135,32 @@ router.get(
   }),
   (req, res) => {
     // Generate JWT token
-    const token = generateToken(req.user);
+    try {
+      if (!req.user) {
+        console.error("Google callback: req.user missing");
+        return res.redirect(
+          `${(process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "")}/login?error=${encodeURIComponent(
+            "Missing user in OAuth callback"
+          )}`
+        );
+      }
+      console.log("Google callback user:", {
+        id: req.user.id,
+        _id: req.user._id,
+        email: req.user.email,
+      });
+      const token = generateToken(req.user);
 
-    // Redirect to frontend with token
-    const base = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.redirect(`${base.replace(/\/$/, "")}/auth/callback?token=${token}`);
+      // Redirect to frontend with token
+      const base = process.env.FRONTEND_URL || "http://localhost:3000";
+      res.redirect(`${base.replace(/\/$/, "")}/auth/callback?token=${token}`);
+    } catch (e) {
+      console.error("Error building Google callback response:", e);
+      const base = process.env.FRONTEND_URL || "http://localhost:3000";
+      res.redirect(
+        `${base.replace(/\/$/, "")}/login?error=${encodeURIComponent("OAuth processing failed")}`
+      );
+    }
   }
 );
 
@@ -176,14 +200,29 @@ router.get("/me", async (req, res) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your_jwt_secret"
-    );
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "your_jwt_secret"
+      );
+    } catch (verifyErr) {
+      console.error("JWT verify failed:", verifyErr && verifyErr.message);
+      return res.status(401).json({ message: "Invalid token" });
+    }
 
-    // Get user
-    const user = await User.findById(decoded.id).select("-password");
+    // Get user by id, fallback to email if needed
+    let user = null;
+    if (decoded && decoded.id) {
+      user = await User.findById(decoded.id).select("-password");
+    }
+    if (!user && decoded && decoded.email) {
+      user = await User.findOne({ email: decoded.email.toLowerCase() }).select(
+        "-password"
+      );
+    }
     if (!user) {
+      console.warn("/auth/me: user not found for id", decoded && decoded.id);
       return res.status(404).json({ message: "User not found" });
     }
 
