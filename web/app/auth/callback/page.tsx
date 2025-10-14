@@ -30,10 +30,9 @@ function AuthCallbackContent() {
       }
 
       try {
-        // Store token first
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", token);
-        }
+        // Ensure we save the token with the exact key used by the API client
+        const { setAuthToken } = await import("@/lib/api/client");
+        setAuthToken(token);
 
         // Fetch user data with the token
         const { getCurrentUser } = await import("@/lib/api/auth");
