@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { Navbar } from "@/components/layout/Navbar";
-import { FloatingChatbot } from "@/components/chat/FloatingChatbot";
+
 
 /**
  * Render the dashboard layout and enforce redirect to the login page for unauthenticated users.
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Navbar />
       <main className="flex-1 overflow-hidden">{children}</main>
       
-      {/* Floating chatbot available on all dashboard pages */}
+
       
     </div>
   );
