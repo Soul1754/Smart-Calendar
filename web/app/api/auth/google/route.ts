@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
     const resp = await fetch(`${apiBase}/auth/google/callback`, { redirect: "manual" });
@@ -13,8 +13,8 @@ export async function GET(_req: NextRequest) {
     const redirectResponse = NextResponse.redirect(location, { status: 302 });
     
     // Forward any Set-Cookie headers from backend (for session state)
-    const cookies = resp.headers.getSetCookie?.() || 
-                   (resp.headers as any).raw?.()['set-cookie'] || 
+    const cookies = resp.headers.getSetCookie?.() ||
+                   (resp.headers as { raw?: () => Record<string, string[]> }).raw?.()['set-cookie'] ||
                    [];
     
     for (const cookie of cookies) {

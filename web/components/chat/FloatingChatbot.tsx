@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChatBubbleLeftRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { ChatWindow } from "./ChatWindow";
 
 /**
