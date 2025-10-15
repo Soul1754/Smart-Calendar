@@ -77,7 +77,12 @@ export async function getCurrentUser(tokenOverride?: string): Promise<{ user: Us
   console.log("[getCurrentUser] API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
   
   const config: AxiosRequestConfig | undefined = tokenOverride
-    ? { headers: { "x-auth-token": tokenOverride } }
+    ? { 
+        headers: { 
+          "x-auth-token": tokenOverride,
+          "ngrok-skip-browser-warning": "true" // Add ngrok header here too
+        } 
+      }
     : undefined;
   
   console.log("[getCurrentUser] Request config:", config);

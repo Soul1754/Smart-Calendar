@@ -25,6 +25,7 @@ function createAxiosInstance(): AxiosInstance {
     baseURL: API_BASE_URL,
     headers: {
       "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning page
     },
     timeout: 30000,
   });
