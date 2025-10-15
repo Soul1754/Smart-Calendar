@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-    const resp = await fetch(`${apiBase}/auth/google/callback`, { redirect: "manual" });
+    const resp = await fetch(`${apiBase}/auth/google`, { redirect: "manual" });
     const location = resp.headers.get("location");
     if (!location) {
       return NextResponse.json({ message: "OAuth redirect not provided by API" }, { status: 502 });

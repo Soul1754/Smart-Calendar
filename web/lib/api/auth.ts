@@ -76,14 +76,10 @@ export async function getCurrentUser(tokenOverride?: string): Promise<{ user: Us
   const config: AxiosRequestConfig | undefined = tokenOverride
     ? { headers: { "x-auth-token": tokenOverride } }
     : undefined;
-  console.log("getCurrentUser: calling /auth/me with config", config);
   const res = await get<Partial<{ user: User }>>("/auth/me", config);
-  console.log("getCurrentUser: received response", res);
   if (!res || !res.user) {
-    console.error("getCurrentUser: validation failed, res:", res);
     throw new Error("User not found in /auth/me response");
   }
-  console.log("getCurrentUser: validation passed, returning user");
   return { user: res.user };
 }
 
@@ -109,7 +105,7 @@ export async function logout(): Promise<void> {
  */
 export function getGoogleAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/google/callback`;
+  return `${baseUrl}/auth/google`;
 }
 
 /**
@@ -119,7 +115,7 @@ export function getGoogleAuthUrl(): string {
  */
 export function getMicrosoftAuthUrl(): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-  return `${baseUrl}/auth/microsoft/callback`;
+  return `${baseUrl}/auth/microsoft`;
 }
 
 export async function disconnectCalendar(
