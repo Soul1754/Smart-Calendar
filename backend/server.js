@@ -14,17 +14,34 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-    allowedHeaders: ["Content-Type", "x-auth-token", "Authorization"],
-    exposedHeaders: ["x-auth-token"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  })
-);
+
+// CORS Configuration - Must come before routes
+const corsOptions = {
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+  optionsSuccessStatus: 200, // Changed from 204 to 200 to ensure proper response
+  allowedHeaders: ["Content-Type", "x-auth-token", "Authorization"],
+  exposedHeaders: ["x-auth-token"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+};
+
+app.use(cors(corsOptions));
+
+// Request logging middleware - AFTER CORS
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.get('origin')} - Auth: ${req.get('x-auth-token') ? 'YES' : 'NO'}`);
+  
+  // Log CORS-related headers for debugging
+  if (req.method === 'OPTIONS') {
+    console.log('CORS Preflight:', {
+      origin: req.get('origin'),
+      method: req.get('Access-Control-Request-Method'),
+      headers: req.get('Access-Control-Request-Headers')
+    });
+  }
+  
+  next();
+});
 app.use(passport.initialize());
 
 // Configure Passport
@@ -68,7 +85,7 @@ app.use("/api/chatbot", require("./routes/chatbot"));
 app.use((err, req, res, next) => {
   console.error("ERROR DETAILS:", err);
   console.error("ERROR STACK:", err.stack);
-  res.status(500).send("Something broke!");
+  res.status(500).send("Something broke!", err.message);
 });
 
 app.get("/health", (req, res) => {

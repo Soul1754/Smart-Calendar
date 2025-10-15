@@ -73,14 +73,28 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
+  console.log("[getCurrentUser] Called with tokenOverride:", !!tokenOverride);
+  console.log("[getCurrentUser] API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+  
   const config: AxiosRequestConfig | undefined = tokenOverride
     ? { headers: { "x-auth-token": tokenOverride } }
     : undefined;
-  const res = await get<Partial<{ user: User }>>("/auth/me", config);
-  if (!res || !res.user) {
-    throw new Error("User not found in /auth/me response");
+  
+  console.log("[getCurrentUser] Request config:", config);
+  
+  try {
+    const res = await get<Partial<{ user: User }>>("/auth/me", config);
+    console.log("[getCurrentUser] Response received:", res);
+    
+    if (!res || !res.user) {
+      console.error("[getCurrentUser] No user in response, full response:", res);
+      throw new Error("User not found in /auth/me response");
+    }
+    return { user: res.user };
+  } catch (error) {
+    console.error("[getCurrentUser] Error caught:", error);
+    throw error;
   }
-  return { user: res.user };
 }
 
 /**

@@ -150,6 +150,10 @@ router.get(
         email: req.user.email,
       });
       const token = generateToken(req.user);
+      console.log("Generated token for user:", {
+        userId: String(req.user._id || req.user.id),
+        email: req.user.email
+      });
 
       // Redirect to frontend with token
       const base = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -190,10 +194,16 @@ router.get(
 
 // Get current user
 router.get("/me", async (req, res) => {
+  console.log("/auth/me: Request received");
+  console.log("/auth/me: Headers:", req.headers);
+  
   try {
     // Get token from header
     const token = req.header("x-auth-token");
+    console.log("/auth/me: Token present:", !!token);
+    
     if (!token) {
+      console.log("/auth/me: No token provided");
       return res
         .status(401)
         .json({ message: "No token, authorization denied" });
@@ -206,6 +216,7 @@ router.get("/me", async (req, res) => {
         token,
         process.env.JWT_SECRET || "your_jwt_secret"
       );
+      console.log("/auth/me: decoded token:", { id: decoded.id, email: decoded.email });
     } catch (verifyErr) {
       console.error("JWT verify failed:", verifyErr && verifyErr.message);
       return res.status(401).json({ message: "Invalid token" });
@@ -214,15 +225,29 @@ router.get("/me", async (req, res) => {
     // Get user by id, fallback to email if needed
     let user = null;
     if (decoded && decoded.id) {
+      console.log("/auth/me: searching by id:", decoded.id);
       user = await User.findById(decoded.id).select("-password");
+      console.log("/auth/me: user found by id:", !!user);
+      if (!user) {
+        console.warn(`/auth/me: No user found with _id: ${decoded.id}`);
+        // Check if user exists with this email instead
+        console.log("/auth/me: Checking if any users exist with email:", decoded.email);
+        const allUsersWithEmail = await User.find({ email: decoded.email });
+        console.log("/auth/me: Users with this email:", allUsersWithEmail.map(u => ({ _id: u._id, email: u.email })));
+      }
     }
     if (!user && decoded && decoded.email) {
+      console.log("/auth/me: searching by email:", decoded.email);
       user = await User.findOne({ email: decoded.email.toLowerCase() }).select(
         "-password"
       );
+      console.log("/auth/me: user found by email:", !!user);
+      if (user) {
+        console.log("/auth/me: User found by email has _id:", user._id);
+      }
     }
     if (!user) {
-      console.warn("/auth/me: user not found for id", decoded && decoded.id);
+      console.warn("/auth/me: user not found for decoded:", JSON.stringify(decoded));
       return res.status(404).json({ message: "User not found" });
     }
 

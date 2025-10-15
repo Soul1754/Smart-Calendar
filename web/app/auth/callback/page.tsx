@@ -32,22 +32,35 @@ function AuthCallbackContent() {
       try {
         // Ensure we save the token with the exact key used by the API client
         const { setAuthToken } = await import("@/lib/api/client");
+        console.log("[Callback] Saving token to localStorage");
         setAuthToken(token);
 
         // Fetch user data with the token
+        console.log("[Callback] Calling getCurrentUser with token");
         const { getCurrentUser } = await import("@/lib/api/auth");
-        const response = await getCurrentUser(token);
         
-        const { user } = response;
-        if (!user) {
-          throw new Error("User object is missing from response");
+        try {
+          const response = await getCurrentUser(token);
+          console.log("[Callback] getCurrentUser response:", response);
+          
+          const { user } = response;
+          if (!user) {
+            throw new Error("User object is missing from response");
+          }
+
+          // Now login with both token and user data
+          login(token, user);
+
+          toast.success("Successfully connected your calendar!");
+          router.push("/calendar");
+        } catch (getUserError) {
+          console.error("[Callback] getCurrentUser failed:", getUserError);
+          console.error("[Callback] Error details:", {
+            message: getUserError instanceof Error ? getUserError.message : String(getUserError),
+            stack: getUserError instanceof Error ? getUserError.stack : undefined
+          });
+          throw getUserError;
         }
-
-        // Now login with both token and user data
-        login(token, user);
-
-        toast.success("Successfully connected your calendar!");
-        router.push("/calendar");
       } catch (error) {
         console.error("OAuth callback error:", error);
         const errorMessage = error instanceof Error ? error.message : "Please try again";
