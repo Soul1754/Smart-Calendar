@@ -20,7 +20,7 @@ const corsOptions = {
   origin: process.env.FRONTEND_URL,
   credentials: true,
   optionsSuccessStatus: 200, // Changed from 204 to 200 to ensure proper response
-  allowedHeaders: ["Content-Type", "x-auth-token", "Authorization"],
+  allowedHeaders: ["Content-Type", "x-auth-token", "Authorization", "ngrok-skip-browser-warning"],
   exposedHeaders: ["x-auth-token"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
 };
