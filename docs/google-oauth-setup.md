@@ -36,11 +36,11 @@ This guide will walk you through the process of setting up Google OAuth credenti
    - User support email: Your email address
    - Developer contact information: Your email address
 5. Click "Save and Continue"
-6. Add the following scopes:
-   - `./auth/userinfo.email`
-   - `./auth/userinfo.profile`
-   - `./auth/calendar`
-   - `./auth/calendar.events`
+5. Add the following scopes:
+   - `https://www.googleapis.com/auth/userinfo.email`
+   - `https://www.googleapis.com/auth/userinfo.profile`
+   - `https://www.googleapis.com/auth/calendar`
+   - `https://www.googleapis.com/auth/calendar.events`
 7. Click "Save and Continue"
 8. Add test users if you're in testing mode
 9. Click "Save and Continue"
@@ -52,9 +52,11 @@ This guide will walk you through the process of setting up Google OAuth credenti
 3. Select "Web application" as the application type
 4. Name: "Smart Calendar Web Client"
 5. Add Authorized JavaScript origins:
-   - `http://localhost:5173` (for local development frontend)
-6. Add Authorized redirect URIs:
-   - `http://localhost:5001/auth/google/callback` (for local development backend)
+   - Local dev: `http://localhost:3000` (Next.js default) or your dev URL
+   - Cloud: your Vercel frontend URL (e.g., `https://<project>.vercel.app`)
+6. Add Authorized redirect URIs (must be exact):
+   - Local tunnel (ngrok): `https://<your-domain>.ngrok-free.app/auth/google/callback`
+   - Production: `https://<backend-domain>/auth/google/callback`
 7. Click "Create"
 8. You will see a modal with your client ID and client secret. Copy these values.
 
@@ -70,22 +72,23 @@ This guide will walk you through the process of setting up Google OAuth credenti
 
 ## Testing the Integration
 
-1. Start your backend server: `cd backend && npm run dev`
-2. Start your frontend: `cd frontend && npm run dev`
-3. Navigate to the login page and click "Sign in with Google"
-4. You should be redirected to Google's authentication page
-5. After successful authentication, you should be redirected back to your application
+1. Start backend: `cd backend && npm run dev`
+2. Start frontend: `cd web && npm run dev`
+3. Ensure backend env `FRONTEND_URL` and frontend env `NEXT_PUBLIC_API_BASE_URL` are set correctly
+4. Click "Continue with Google"
+5. After consenting, you'll be redirected back to `/auth/callback?token=...`; the frontend saves token and calls `/auth/me`.
 
 ## Troubleshooting
 
-- If you encounter "redirect_uri_mismatch" errors, ensure that the redirect URI in your Google Cloud Console matches exactly with the one in your application
+- If you encounter "redirect_uri_mismatch", ensure the Console redirect URI matches `<public-backend>/auth/google/callback` exactly (including scheme/host/path)
 - For "invalid_client" errors, double-check that your client ID and secret are correctly copied into the .env file
 - If you see "access_denied" errors, verify that you've enabled the necessary APIs and configured the correct scopes
+- For ngrok free domains, the frontend must send header `ngrok-skip-browser-warning: true` and backend CORS must allow it.
 
 ## Moving to Production
 
 When deploying to production:
 
-1. Add your production domain to the Authorized JavaScript origins
-2. Add your production callback URL to the Authorized redirect URIs
+1. Add your production frontend domain to Authorized JavaScript origins
+2. Add your production backend callback URL to Authorized redirect URIs
 3. If you selected "External" user type, you'll need to verify your app and go through the verification process before it can be used by all users

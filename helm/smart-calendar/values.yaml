@@ -1,0 +1,238 @@
+# Default values for smart-calendar Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+
+# Backend configuration (Node.js/Express API)
+backend:
+  # Number of backend replicas
+  replicaCount: 1
+
+  image:
+    # Docker image repository for backend
+    repository: s0ul1754/smart-calendar-backend
+    # Image pull policy
+    pullPolicy: IfNotPresent
+    # Image tag (overrides Chart appVersion)
+    tag: "latest"
+
+  # Backend container port (must match your Express server port)
+  containerPort: 5001
+
+  service:
+    # Service type (ClusterIP for internal communication)
+    type: ClusterIP
+    # Service port
+    port: 5001
+
+  # Health check probes
+  probes:
+    liveness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+    readiness:
+      enabled: true
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+      successThreshold: 1
+
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Environment variables (additional to MONGO_URI from secret)
+  env:
+    - name: NODE_ENV
+      value: "production"
+    - name: PORT
+      value: "5001"
+    # Add more environment variables as needed
+    # - name: LOG_LEVEL
+    #   value: "info"
+
+  # Node selector for pod assignment
+  nodeSelector: {}
+
+  # Tolerations for pod assignment
+  tolerations: []
+
+  # Affinity rules for pod assignment
+  affinity: {}
+
+# Frontend configuration (Next.js application)
+frontend:
+  # Number of frontend replicas
+  replicaCount: 1
+
+  image:
+    # Docker image repository for frontend
+    repository: s0ul1754/smart-calendar-frontend
+    # Image pull policy
+    pullPolicy: IfNotPresent
+    # Image tag (overrides Chart appVersion)
+    tag: "latest"
+
+  # Frontend container port (Next.js default is 3000)
+  containerPort: 3000
+
+  service:
+    # Service type (ClusterIP for internal communication)
+    type: ClusterIP
+    # Service port
+    port: 3000
+
+  # Health check probes
+  probes:
+    liveness:
+      enabled: true
+      path: /
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+    readiness:
+      enabled: true
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+      successThreshold: 1
+
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 150m
+      memory: 128Mi
+
+  # Environment variables
+  env:
+    - name: NODE_ENV
+      value: "production"
+    - name: PORT
+      value: "3000"
+    # Backend API URL (accessible from browser and server-side)
+    - name: NEXT_PUBLIC_API_BASE_URL
+      value: "http://smart-calendar.local/api"
+
+  # Node selector for pod assignment
+  nodeSelector: {}
+
+  # Tolerations for pod assignment
+  tolerations: []
+
+  # Affinity rules for pod assignment
+  affinity: {}
+
+# MongoDB configuration (external MongoDB Atlas)
+mongodb:
+  # IMPORTANT: Base64-encode your MongoDB connection string before adding here
+  # Example: echo -n 'mongodb+srv://user:pass@cluster.mongodb.net/dbname?retryWrites=true&w=majority' | base64
+  # For production, use Helm secrets or external secret management (e.g., Sealed Secrets, Vault)
+  uri: "bW9uZ29kYitzcnY6Ly9zaWRkaGFudGdhaWt3YWQxNzU0OlNtYXJ0Q2FsZW5kYXIxMjNAY2x1c3RlcjAuY2lzMmx5bi5tb25nb2RiLm5ldC8/cmV0cnlXcml0ZXM9dHJ1ZSZ3PW1ham9yaXR5JmFwcE5hbWU9Q2x1c3RlcjA="
+# Ingress configuration
+ingress:
+  # Enable/disable Ingress resource creation
+  enabled: true
+
+  # Ingress class name (e.g., nginx, traefik)
+  className: "nginx"
+
+  # Hostname for the application
+  host: "smart-calendar.local"
+
+  # Ingress annotations
+  annotations:
+    # Example nginx annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Uncomment for production with cert-manager
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+  # TLS configuration
+  tls:
+    # Enable TLS
+    enabled: false
+    # Secret name containing TLS certificate
+    secretName: "smart-calendar-tls"
+
+# Image pull secrets (for private Docker registries)
+imagePullSecrets: []
+# Example:
+# - name: regcred
+
+# Service account configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use
+  name: ""
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+# Additional labels to apply to all resources
+additionalLabels: {}
+# Example:
+#   environment: production
+#   team: platform
+
+# ngrok Tunnel configuration (requires ngrok Kubernetes Operator v0.18+)
+# IMPORTANT: You MUST create a static domain in your ngrok dashboard first!
+# Go to: https://dashboard.ngrok.com/cloud-edge/domains
+# Then set the domain below (e.g., "your-domain-name.ngrok-free.app")
+ngrok:
+  # Enable/disable ngrok tunnel creation
+  enabled: false
+
+  # Static ngrok domain (REQUIRED - get this from your ngrok dashboard)
+  # Free accounts get one static domain like "random-name.ngrok-free.app"
+  # Example: "smart-calendar-123.ngrok-free.app"
+  domain: "dermatoid-osmic-ebonie.ngrok-free.dev"
+
+  # Target service configuration
+  target:
+    # Service name to expose (backend or frontend)
+    serviceName: "backend"
+    # Service port to expose
+    servicePort: 5001
+
+  # Additional ngrok annotations (optional)
+  annotations:
+    {}
+    # Example: Add description
+    # k8s.ngrok.com/description: "Smart Calendar API"

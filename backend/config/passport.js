@@ -41,6 +41,8 @@ passport.use(
           ? profile.emails[0].value.toLowerCase()
           : null;
 
+      console.log("Google OAuth: Looking for user with googleId:", profile.id, "or email:", email);
+
       try {
         // Try to find existing user by googleId OR by email (if provided).
         // This avoids creating a new user when an account with the same email
@@ -50,6 +52,14 @@ passport.use(
           user = await User.findOne({
             $or: [{ googleId: profile.id }, { email }],
           });
+          if (user) {
+            console.log("Google OAuth: Found existing user:", {
+              _id: user._id,
+              email: user.email,
+              googleId: user.googleId,
+              matchedBy: user.googleId === profile.id ? 'googleId' : 'email'
+            });
+          }
         } else if (email) {
           user = await User.findOne({ email });
         }
@@ -65,6 +75,7 @@ passport.use(
             user.name = profile.displayName;
 
           await user.save();
+          console.log("Google OAuth: Existing user updated, returning user with _id:", user._id);
           return done(null, user);
         }
 
@@ -80,6 +91,7 @@ passport.use(
         try {
           const newUser = new User(newUserData);
           await newUser.save();
+          console.log("Google OAuth: New user created with _id:", newUser._id);
           return done(null, newUser);
         } catch (createErr) {
           // Handle race condition / duplicate-key (E11000) where another process

@@ -18,13 +18,22 @@ export class APIError extends Error {
 }
 
 /**
- * Creates an axios instance with default configuration
+ * Create a configured Axios instance for API requests.
+ *
+ * The instance uses the module API base URL, sets default JSON content headers
+ * (including an ngrok bypass header), applies a 30s timeout, attaches an
+ * auth token from localStorage to requests when running in a browser, and
+ * converts response failures into APIError instances with status and response
+ * data when available.
+ *
+ * @returns The configured Axios instance with base URL, default headers, timeout, request auth injection, and standardized error handling.
  */
 function createAxiosInstance(): AxiosInstance {
   const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
       "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning page
     },
     timeout: 30000,
   });

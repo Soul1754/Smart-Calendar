@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { post, get, put, setAuthToken, removeAuthToken } from "./client";
+import type { AxiosRequestConfig, AxiosError } from "axios";
+import { isAxiosError } from "axios";
 
 // Zod schemas for validation
 export const UserSchema = z.object({
@@ -61,6 +63,12 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
   return response;
 }
 
+/**
+ * Authenticate a user using their credentials and persist the returned auth token.
+ *
+ * @param data - The user's login credentials (email and password)
+ * @returns The authentication response containing an auth token and the authenticated user
+ */
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   const validated = LoginRequestSchema.parse(data);
   const response = await post<AuthResponse>("/auth/login", validated);
@@ -71,8 +79,81 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   return response;
 }
 
-export async function getCurrentUser(): Promise<{ user: User }> {
-  return get<{ user: User }>("/auth/me");
+/**
+ * Retrieve the current authenticated user, optionally using an override token.
+ *
+ * @param tokenOverride - Optional auth token to include in the request instead of the stored token
+ * @returns An object `{ user }` containing the authenticated user's data
+ * @throws Error when the response does not include a user or when the request fails
+ */
+export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
+  // Debug logging only in development or when explicit flag is set
+  const debugEnabled =
+    process.env.NEXT_PUBLIC_DEBUG === "true" || process.env.NODE_ENV === "development";
+  const logDebug = (...args: unknown[]) => {
+    if (debugEnabled) console.debug(...args);
+  };
+
+  logDebug("[getCurrentUser] Called with tokenOverride:", !!tokenOverride);
+  logDebug("[getCurrentUser] API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+
+  const config: AxiosRequestConfig | undefined = tokenOverride
+    ? {
+        headers: {
+          // redact token from any debug output
+          "x-auth-token": tokenOverride,
+        },
+      }
+    : undefined;
+
+  // If debug, log a redacted view of the request config (tokens replaced)
+  if (debugEnabled && config && config.headers) {
+    const redacted = { ...config, headers: { ...config.headers, ["x-auth-token"]: "[REDACTED]" } };
+    logDebug("[getCurrentUser] Request config (redacted):", redacted);
+  }
+
+  try {
+    const res = (await get<Partial<{ user: User }>>("/auth/me", config)) as Partial<{ user: User }>;
+
+    // Don't log the full response (may contain PII). In debug, show presence and anonymized id only.
+    const user = res?.user;
+    if (debugEnabled && user) {
+      const rawId: string | undefined =
+        typeof user._id === "string" ? user._id : (user as unknown as { id?: string }).id;
+      const anonId = rawId ? `...${String(rawId).slice(-6)}` : "unknown";
+      logDebug("[getCurrentUser] Response received: user present", {
+        anonId,
+        hasEmail: !!user.email,
+      });
+    } else {
+      logDebug("[getCurrentUser] Response received: user present:", !!user);
+    }
+
+    if (!user) {
+      // Log minimal error without PII
+      console.error("[getCurrentUser] No user in /auth/me response");
+      throw new Error("User not found in /auth/me response");
+    }
+
+    return { user };
+  } catch (error: unknown) {
+    // Avoid printing full error objects that may contain PII or token headers; log safe summary
+    let msg = String(error);
+    let status: number | undefined;
+    if (isAxiosError(error)) {
+      msg = error.message;
+      status = (error as AxiosError)?.response?.status;
+    } else if (error instanceof Error) {
+      msg = error.message;
+    }
+
+    if (debugEnabled) {
+      console.error("[getCurrentUser] Error (debug):", msg, status);
+    } else {
+      console.error("[getCurrentUser] Error:", msg);
+    }
+    throw error;
+  }
 }
 
 /**
