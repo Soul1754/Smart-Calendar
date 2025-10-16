@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Initiates Microsoft OAuth by requesting an authorization URL from the backend and redirecting the client while forwarding any Set-Cookie headers.
+ *
+ * If the backend does not provide a Location header, responds with a 502 JSON error. On unexpected failures, responds with a 500 JSON error containing an error message.
+ *
+ * @returns A NextResponse that is a 302 redirect to the backend-provided OAuth URL with any backend Set-Cookie headers forwarded, or a JSON error response with HTTP status 502 or 500.
+ */
 export async function GET() {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";

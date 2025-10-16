@@ -62,6 +62,12 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
   return response;
 }
 
+/**
+ * Authenticate a user using their credentials and persist the returned auth token.
+ *
+ * @param data - The user's login credentials (email and password)
+ * @returns The authentication response containing an auth token and the authenticated user
+ */
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   const validated = LoginRequestSchema.parse(data);
   const response = await post<AuthResponse>("/auth/login", validated);
@@ -72,6 +78,13 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   return response;
 }
 
+/**
+ * Retrieve the current authenticated user, optionally using an override token.
+ *
+ * @param tokenOverride - Optional auth token to include in the request instead of the stored token
+ * @returns An object `{ user }` containing the authenticated user's data
+ * @throws Error when the response does not include a user or when the request fails
+ */
 export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
   // Debug logging only in development or when explicit flag is set
   const debugEnabled =

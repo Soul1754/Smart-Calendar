@@ -5,6 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { toast } from "sonner";
 
+/**
+ * Completes the OAuth callback flow, establishes the authenticated session, and shows a loading UI while processing.
+ *
+ * Attempts to read `token` and `error` from the URL search parameters. On `error` or a missing `token`, it shows an error toast and redirects to `/login`. If a `token` is present, it saves the token via the API client, fetches the current user with the token, calls the app `login` with the token and user, displays a success toast, and redirects to `/calendar`. Any failures during token saving or user retrieval show an error toast and redirect to `/login`.
+ *
+ * @returns The JSX element that renders a centered loading indicator and messages while the callback is handled.
+ */
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
