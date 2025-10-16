@@ -1,4 +1,4 @@
-# Quick Start Guide - Helm Deployment
+`# Quick Start Guide - Helm Deployment
 
 ## Prerequisites Checklist
 

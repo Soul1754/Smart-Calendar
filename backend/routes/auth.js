@@ -144,16 +144,17 @@ router.get(
           )}`
         );
       }
-      console.log("Google callback user:", {
-        id: req.user.id,
-        _id: req.user._id,
-        email: req.user.email,
+      // Redact PII: only emit non-identifying information and an anonymized id
+      const rawUserId = req.user && (req.user._id || req.user.id) ? String(req.user._id || req.user.id) : undefined;
+      const anonUserId = rawUserId ? `...${rawUserId.slice(-6)}` : 'unknown';
+      console.log("Google callback: user authenticated", {
+        provider: 'google',
+        anonId: anonUserId,
+        hasGoogleToken: !!(req.user && req.user.googleAccessToken),
       });
       const token = generateToken(req.user);
-      console.log("Generated token for user:", {
-        userId: String(req.user._id || req.user.id),
-        email: req.user.email
-      });
+      // Log token generation without PII
+      console.log("Token generated for authenticated user", { anonId: anonUserId });
 
       // Redirect to frontend with token
       const base = process.env.FRONTEND_URL || "http://localhost:3000";

@@ -73,31 +73,59 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function getCurrentUser(tokenOverride?: string): Promise<{ user: User }> {
-  console.log("[getCurrentUser] Called with tokenOverride:", !!tokenOverride);
-  console.log("[getCurrentUser] API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
-  
+  // Debug logging only in development or when explicit flag is set
+  const debugEnabled =
+    process.env.NEXT_PUBLIC_DEBUG === "true" || process.env.NODE_ENV === "development";
+  const logDebug = (...args: any[]) => {
+    if (debugEnabled) console.debug(...args);
+  };
+
+  logDebug("[getCurrentUser] Called with tokenOverride:", !!tokenOverride);
+  logDebug("[getCurrentUser] API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+
   const config: AxiosRequestConfig | undefined = tokenOverride
-    ? { 
-        headers: { 
+    ? {
+        headers: {
+          // redact token from any debug output
           "x-auth-token": tokenOverride,
-          "ngrok-skip-browser-warning": "true" // Add ngrok header here too
-        } 
+        },
       }
     : undefined;
-  
-  console.log("[getCurrentUser] Request config:", config);
-  
+
+  // If debug, log a redacted view of the request config (tokens replaced)
+  if (debugEnabled && config && config.headers) {
+    const redacted = { ...config, headers: { ...config.headers, ["x-auth-token"]: "[REDACTED]" } };
+    logDebug("[getCurrentUser] Request config (redacted):", redacted);
+  }
+
   try {
     const res = await get<Partial<{ user: User }>>("/auth/me", config);
-    console.log("[getCurrentUser] Response received:", res);
-    
-    if (!res || !res.user) {
-      console.error("[getCurrentUser] No user in response, full response:", res);
+
+    // Don't log the full response (may contain PII). In debug, show presence and anonymized id only.
+    if (debugEnabled && res && (res as any).user) {
+      const u = (res as any).user as Partial<User>;
+      const rawId = u?._id || (u as any).id;
+      const anonId = rawId ? `...${String(rawId).slice(-6)}` : "unknown";
+      logDebug("[getCurrentUser] Response received: user present", { anonId, hasEmail: !!u?.email });
+    } else {
+      logDebug("[getCurrentUser] Response received: user present:", !!(res && (res as any).user));
+    }
+
+    if (!res || !(res as any).user) {
+      // Log minimal error without PII
+      console.error("[getCurrentUser] No user in /auth/me response");
       throw new Error("User not found in /auth/me response");
     }
-    return { user: res.user };
-  } catch (error) {
-    console.error("[getCurrentUser] Error caught:", error);
+
+    return { user: (res as any).user };
+  } catch (error: any) {
+    // Avoid printing full error objects that may contain PII or token headers; log safe summary
+    const msg = error?.message || String(error);
+    if (debugEnabled) {
+      console.error("[getCurrentUser] Error (debug):", msg, error?.response?.status);
+    } else {
+      console.error("[getCurrentUser] Error:", msg);
+    }
     throw error;
   }
 }

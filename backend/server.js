@@ -8,12 +8,22 @@ const serverless = require("serverless-http");
 
 // Load environment variables
 dotenv.config();
+if (!process.env.FRONTEND_URL) {
+   console.error('FRONTEND_URL must be set');
+   process.exit(1);
+}
 
 // Initialize Express app
 const app = express();
 
 // Middleware
 app.use(express.json());
+
+// Debug logging flag and helper
+const debugEnabled = (process.env.DEBUG_LOGS === 'true') || (process.env.DEBUG_REQUESTS === 'true');
+const logDebug = (...args) => {
+  if (debugEnabled) console.log(...args);
+};
 
 // CORS Configuration - Must come before routes
 const corsOptions = {
@@ -27,19 +37,26 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Request logging middleware - AFTER CORS
+// Request logging middleware - install always but only emit sensitive details when debug is enabled
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - Origin: ${req.get('origin')} - Auth: ${req.get('x-auth-token') ? 'YES' : 'NO'}`);
-  
-  // Log CORS-related headers for debugging
-  if (req.method === 'OPTIONS') {
-    console.log('CORS Preflight:', {
-      origin: req.get('origin'),
-      method: req.get('Access-Control-Request-Method'),
-      headers: req.get('Access-Control-Request-Headers')
-    });
+  // Basic request line is safe to always log at info level; sensitive details (auth presence, CORS headers) are guarded
+  console.log(`${req.method} ${req.path}`);
+
+  // Only log origin/auth/CORS debugging details when explicitly enabled
+  if (debugEnabled) {
+    logDebug('Origin:', req.get('origin'));
+    // Optionally log whether an auth token header is present (non-PII boolean)
+    logDebug('Auth token present:', !!req.header('x-auth-token'));
+
+    if (req.method === 'OPTIONS') {
+      logDebug('CORS Preflight:', {
+        origin: req.get('origin'),
+        method: req.get('Access-Control-Request-Method'),
+        headers: req.get('Access-Control-Request-Headers'),
+      });
+    }
   }
-  
+
   next();
 });
 app.use(passport.initialize());
@@ -85,7 +102,11 @@ app.use("/api/chatbot", require("./routes/chatbot"));
 app.use((err, req, res, next) => {
   console.error("ERROR DETAILS:", err);
   console.error("ERROR STACK:", err.stack);
-  res.status(500).send("Something broke!", err.message);
+  const message =
+    process.env.NODE_ENV === "production"
+      ? "Internal server error"
+      : `Something broke! ${err.message}`;
+  res.status(500).send(message);
 });
 
 app.get("/health", (req, res) => {
