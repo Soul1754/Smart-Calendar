@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { post, get, put, setAuthToken, removeAuthToken } from "./client";
-import type { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig, AxiosError } from "axios";
+import { isAxiosError } from "axios";
 
 // Zod schemas for validation
 export const UserSchema = z.object({
@@ -76,7 +77,7 @@ export async function getCurrentUser(tokenOverride?: string): Promise<{ user: Us
   // Debug logging only in development or when explicit flag is set
   const debugEnabled =
     process.env.NEXT_PUBLIC_DEBUG === "true" || process.env.NODE_ENV === "development";
-  const logDebug = (...args: any[]) => {
+  const logDebug = (...args: unknown[]) => {
     if (debugEnabled) console.debug(...args);
   };
 
@@ -99,30 +100,42 @@ export async function getCurrentUser(tokenOverride?: string): Promise<{ user: Us
   }
 
   try {
-    const res = await get<Partial<{ user: User }>>("/auth/me", config);
+    const res = (await get<Partial<{ user: User }>>("/auth/me", config)) as Partial<{ user: User }>;
 
     // Don't log the full response (may contain PII). In debug, show presence and anonymized id only.
-    if (debugEnabled && res && (res as any).user) {
-      const u = (res as any).user as Partial<User>;
-      const rawId = u?._id || (u as any).id;
+    const user = res?.user;
+    if (debugEnabled && user) {
+      const rawId: string | undefined =
+        typeof user._id === "string" ? user._id : (user as unknown as { id?: string }).id;
       const anonId = rawId ? `...${String(rawId).slice(-6)}` : "unknown";
-      logDebug("[getCurrentUser] Response received: user present", { anonId, hasEmail: !!u?.email });
+      logDebug("[getCurrentUser] Response received: user present", {
+        anonId,
+        hasEmail: !!user.email,
+      });
     } else {
-      logDebug("[getCurrentUser] Response received: user present:", !!(res && (res as any).user));
+      logDebug("[getCurrentUser] Response received: user present:", !!user);
     }
 
-    if (!res || !(res as any).user) {
+    if (!user) {
       // Log minimal error without PII
       console.error("[getCurrentUser] No user in /auth/me response");
       throw new Error("User not found in /auth/me response");
     }
 
-    return { user: (res as any).user };
-  } catch (error: any) {
+    return { user };
+  } catch (error: unknown) {
     // Avoid printing full error objects that may contain PII or token headers; log safe summary
-    const msg = error?.message || String(error);
+    let msg = String(error);
+    let status: number | undefined;
+    if (isAxiosError(error)) {
+      msg = error.message;
+      status = (error as AxiosError)?.response?.status;
+    } else if (error instanceof Error) {
+      msg = error.message;
+    }
+
     if (debugEnabled) {
-      console.error("[getCurrentUser] Error (debug):", msg, error?.response?.status);
+      console.error("[getCurrentUser] Error (debug):", msg, status);
     } else {
       console.error("[getCurrentUser] Error:", msg);
     }
