@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Initiates Google OAuth by delegating to the backend and issuing a client redirect.
+ *
+ * Calls the backend's /auth/google endpoint, reads the backend-provided Location header, and issues a 302 redirect to that URL while forwarding any Set-Cookie headers from the backend to preserve session state. If the backend does not provide a Location header, responds with a 502 JSON error; on unexpected failures responds with a 500 JSON error containing the error message.
+ *
+ * @returns A redirect Response with status 302 and forwarded `Set-Cookie` headers, or a JSON error response with status 502 or 500 containing a `message`.
+ */
 export async function GET() {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
