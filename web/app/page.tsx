@@ -20,12 +20,10 @@ gsap.registerPlugin(ScrollTrigger);
 export default function LandingPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const heroRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/calendar");
-    }
+    if (isAuthenticated) router.push("/calendar");
   }, [isAuthenticated, router]);
 
   useEffect(() => {
@@ -33,74 +31,58 @@ export default function LandingPage() {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
-      // Hero animations
-      gsap.from(".hero-badge", { opacity: 0, y: -30, duration: 0.8, ease: "back.out(1.7)" });
-      gsap.from(".hero-title", { opacity: 0, y: 50, duration: 1, delay: 0.3, ease: "power3.out" });
-      gsap.from(".hero-subtitle", {
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        delay: 0.6,
-        ease: "power2.out",
-      });
-      gsap.from(".hero-cta", {
-        opacity: 0,
-        scale: 0.8,
-        duration: 0.6,
-        delay: 0.9,
-        ease: "back.out(1.7)",
-      });
+      // Entrance timeline for hero
+      const tl = gsap.timeline();
+      tl.from(".brand", { opacity: 0, y: -12, duration: 0.45, ease: "power2.out" })
+        .from(".hero-badge", { opacity: 0, y: -20, duration: 0.45, ease: "back.out(1.5)" })
+        .from(".hero-title .line", {
+          clipPath: "inset(0 0 100% 0)",
+          stagger: 0.06,
+          duration: 0.7,
+          ease: "power3.out",
+        })
+        .from(".hero-sub", { opacity: 0, y: 18, duration: 0.6, ease: "power2.out" }, "-=0.3")
+        .from(
+          ".hero-cta",
+          { opacity: 0, scale: 0.96, duration: 0.45, ease: "back.out(1.4)" },
+          "-=0.3"
+        );
 
-      // Floating shapes
-      gsap.to(".floating-shape", {
-        y: "+=30",
-        duration: 3,
+      // Floating illustration bob
+      gsap.to(".float-bob", {
+        y: 18,
+        duration: 3.5,
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
-        stagger: { amount: 1.5 },
       });
 
-      // Stats animation
-      gsap.from(".stat-card", {
-        scrollTrigger: { trigger: ".stats-section", start: "top 80%" },
+      // Staggered feature reveal on scroll
+      gsap.from(".feature", {
+        scrollTrigger: { trigger: ".features", start: "top 85%" },
         opacity: 0,
-        y: 40,
-        duration: 0.8,
-        stagger: 0.15,
+        y: 36,
+        stagger: 0.12,
+        duration: 0.7,
         ease: "power3.out",
       });
 
-      // Feature cards
-      gsap.from(".feature-card", {
-        scrollTrigger: { trigger: ".features-section", start: "top 80%" },
-        opacity: 0,
-        y: 60,
-        duration: 0.8,
-        stagger: 0.2,
-        ease: "power3.out",
-      });
-
-      // Benefits
-      gsap.from(".benefit-item", {
-        scrollTrigger: { trigger: ".benefits-section", start: "top 80%" },
-        opacity: 0,
-        x: -40,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: "power2.out",
-      });
-
-      // Testimonials
-      gsap.from(".testimonial-card", {
-        scrollTrigger: { trigger: ".testimonials-section", start: "top 80%" },
-        opacity: 0,
+      // Stats pop
+      gsap.from(".stat", {
+        scrollTrigger: { trigger: ".stats", start: "top 85%" },
         scale: 0.9,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: "back.out(1.7)",
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.6,
+        ease: "back.out(1.5)",
       });
-    }, heroRef);
+
+      // subtle parallax for background blobs
+      gsap.to(".bg-blob", {
+        yPercent: -12,
+        scrollTrigger: { scrub: 0.8 },
+      });
+    }, rootRef);
 
     return () => ctx.revert();
   }, []);
@@ -108,163 +90,274 @@ export default function LandingPage() {
   const features = [
     {
       icon: CalendarIcon,
-      title: "Smart Scheduling",
-      description:
-        "AI-powered calendar that learns your preferences and suggests optimal meeting times.",
-      color: "from-blue-500 to-cyan-500",
+      title: "Smart scheduling",
+      description: "Natural language scheduling that actually understands meeting intent.",
     },
     {
       icon: SparklesIcon,
-      title: "AI Assistant",
-      description:
-        "Natural language chatbot to create, reschedule, and manage your meetings effortlessly.",
-      color: "from-purple-500 to-pink-500",
+      title: "AI assistant",
+      description: "Create, reschedule, summarize — just ask.",
     },
     {
       icon: ClockIcon,
-      title: "Time Optimization",
-      description: "Automatically find the best time slots that work for all participants.",
-      color: "from-orange-500 to-red-500",
+      title: "Time optimizer",
+      description: "Auto-groups tasks and spots hidden free time.",
     },
     {
       icon: UsersIcon,
-      title: "Multi-Calendar",
-      description: "Connect Google and Microsoft calendars for unified scheduling experience.",
-      color: "from-green-500 to-emerald-500",
+      title: "Unified calendars",
+      description: "Google, Outlook, Apple — one synced view.",
     },
   ];
 
   const stats = [
-    { value: "10K+", label: "Active Users", icon: UsersIcon },
-    { value: "500K+", label: "Meetings Scheduled", icon: CalendarIcon },
-    { value: "95%", label: "Time Saved", icon: ClockIcon },
-    { value: "4.9/5", label: "User Rating", icon: SparklesIcon },
+    { value: "10K+", label: "Active people using Smart Calendar" },
+    { value: "500K+", label: "Meetings scheduled" },
+    { value: "95%", label: "Avg. time saved per user" },
+    { value: "4.9/5", label: "Average rating" },
   ];
 
   if (isAuthenticated) return null;
 
   return (
-    <div ref={heroRef} className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center space-x-2">
-            <CalendarIcon className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">Smart Calendar</span>
+    <div
+      ref={rootRef}
+      className="min-h-screen bg-[linear-gradient(180deg,#0f1724,transparent)] text-white antialiased"
+    >
+      {/* NOTE: Add fonts to globals.css:
+          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@300;400;600&display=swap');
+          html { --ff-heading: 'Space Grotesk', system-ui, sans-serif; --ff-body: 'Inter', system-ui, sans-serif; }
+      */}
+
+      {/* Header */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/6 backdrop-blur-sm bg-black/30">
+        <div className="container mx-auto flex items-center justify-between h-16 px-5">
+          <div
+            className="flex items-center gap-3 brand cursor-pointer"
+            onClick={() => router.push("/")}
+          >
+            <div className="flex items-center gap-2">
+              <div className="rounded-md p-1 bg-gradient-to-br from-[#7c3aed] to-[#06b6d4]">
+                <CalendarIcon className="h-6 w-6 text-black/90" />
+              </div>
+              <span className="font-[600] text-lg" style={{ fontFamily: "var(--ff-heading)" }}>
+                Smart <span className="text-[#06b6d4]">Calendar</span>
+              </span>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => router.push("/login")}>
+            <button
+              className="text-sm font-medium opacity-90 hover:opacity-100"
+              onClick={() => router.push("/login")}
+            >
               Log in
-            </Button>
-            <Button onClick={() => router.push("/signup")}>Get Started</Button>
+            </button>
+            <Button onClick={() => router.push("/signup")}>Create account</Button>
           </div>
         </div>
       </header>
-      <section className="relative overflow-hidden pt-32 pb-20 px-4">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="floating-shape absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="floating-shape absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        </div>
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center space-y-8">
-            <div className="hero-badge inline-block">
-              <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                AI-Powered Calendar Management
-              </span>
-            </div>
-            <h1 className="hero-title text-5xl md:text-7xl font-bold text-foreground leading-tight">
-              Your Calendar,{" "}
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Reimagined with AI
-              </span>
-            </h1>
-            <p className="hero-subtitle text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Schedule meetings effortlessly with natural language. Connect multiple calendars and
-              let AI find the perfect time for everyone.
-            </p>
-            <div className="hero-cta flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" onClick={() => router.push("/signup")} className="group">
-                Get Started Free{" "}
-                <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => router.push("/login")}>
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="stats-section py-16 px-4 bg-gradient-to-b from-background to-muted/30">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="stat-card text-center">
-                  <div className="flex justify-center mb-3">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Icon className="h-8 w-8 text-primary" />
+      {/* Hero */}
+      <main className="pt-28 pb-20">
+        <section className="relative overflow-hidden">
+          {/* decorative blobs (parallax) */}
+          <div
+            className="absolute -left-40 top-10 w-[520px] h-[520px] rounded-full bg-[#7c3aed33] filter blur-[80px] bg-blob"
+            aria-hidden
+          />
+          <div
+            className="absolute -right-40 bottom-6 w-[680px] h-[680px] rounded-full bg-[#06b6d433] filter blur-[120px] bg-blob"
+            aria-hidden
+          />
+
+          <div className="container mx-auto max-w-6xl px-5 relative z-10">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="text-left">
+                <div className="inline-block hero-badge rounded-full px-3 py-1 mb-6 text-sm bg-white/8 backdrop-blur-sm border border-white/6">
+                  <strong>New</strong> • AI-first scheduling
+                </div>
+
+                <h1
+                  className="hero-title text-4xl md:text-6xl font-[700] leading-tight mb-4"
+                  style={{ fontFamily: "var(--ff-heading)" }}
+                >
+                  Your calendar,{" "}
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#7c3aed] to-[#06b6d4]">
+                    but friendlier
+                  </span>
+                </h1>
+
+                <p className="hero-sub text-lg md:text-xl text-white/80 mb-6 max-w-xl">
+                  Smart Calendar helps reduce meeting overhead, auto-suggests times, and drafts
+                  quick meeting notes — all with a friendly assistant that understands context.
+                </p>
+
+                <div className="flex flex-wrap gap-3 hero-cta">
+                  <Button size="lg" onClick={() => router.push("/signup")} className="group">
+                    Start free
+                    <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => router.push("/login")}>
+                    Sign in
+                  </Button>
+                </div>
+
+                <div className="mt-6 stats flex gap-4 flex-wrap">
+                  {stats.map((s, i) => (
+                    <div key={i} className="stat rounded-xl bg-white/4 px-3 py-2 text-left">
+                      <div className="text-sm text-white/60">{s.label}</div>
+                      <div className="text-xl font-bold">{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Illustration card with playful calendar tiles */}
+              <div className="relative flex justify-center">
+                <div className="w-full max-w-md">
+                  <div className="float-bob rounded-3xl bg-gradient-to-br from-[#061026]/60 to-[#061026]/40 p-6 backdrop-blur-md border border-white/6 shadow-2xl">
+                    {/* Simple hand-drawn style SVG hero (inline for control) */}
+                    <svg
+                      viewBox="0 0 720 420"
+                      className="w-full h-auto rounded-lg"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <defs>
+                        <linearGradient id="g1" x1="0" x2="1">
+                          <stop offset="0" stopColor="#7c3aed" stopOpacity="1" />
+                          <stop offset="1" stopColor="#06b6d4" stopOpacity="1" />
+                        </linearGradient>
+                        <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
+                          <feGaussianBlur stdDeviation="18" result="b" />
+                          <feBlend in="SourceGraphic" in2="b" />
+                        </filter>
+                      </defs>
+
+                      <rect
+                        x="20"
+                        y="30"
+                        rx="18"
+                        ry="18"
+                        width="460"
+                        height="320"
+                        fill="#0b1220"
+                        stroke="#ffffff10"
+                        strokeWidth="1"
+                      />
+                      {/* calendar header */}
+                      <rect
+                        x="60"
+                        y="58"
+                        width="380"
+                        height="48"
+                        rx="10"
+                        fill="url(#g1)"
+                        filter="url(#f1)"
+                      />
+                      {/* a few event tiles */}
+                      <rect x="80" y="130" rx="8" ry="8" width="140" height="36" fill="#ffffff08" />
+                      <rect
+                        x="240"
+                        y="130"
+                        rx="8"
+                        ry="8"
+                        width="160"
+                        height="36"
+                        fill="#ffffff06"
+                      />
+                      <rect x="80" y="180" rx="8" ry="8" width="320" height="36" fill="#ffffff06" />
+                      {/* playful avatar */}
+                      <circle cx="520" cy="90" r="36" fill="#ffd166" />
+                      <text
+                        x="520"
+                        y="96"
+                        fontSize="20"
+                        fontFamily="sans-serif"
+                        textAnchor="middle"
+                        fill="#111"
+                      >
+                        Me
+                      </text>
+                      {/* sparkles */}
+                      <g transform="translate(520,200) rotate(-20)">
+                        <path
+                          d="M0-18 L4 -6 L18 -6 L6 2 L10 14 L0 6 L-10 14 L-6 2 L-18 -6 L-4 -6 Z"
+                          fill="#fff6"
+                        />
+                      </g>
+                    </svg>
+                  </div>
+
+                  {/* small floating mini-card stack for depth */}
+                  <div className="absolute -left-8 -bottom-6 rotate-3">
+                    <div className="w-36 h-20 rounded-2xl bg-white/6 p-3 border border-white/6 shadow-lg">
+                      <div className="text-xs text-white/70">Tomorrow</div>
+                      <div className="text-sm font-semibold mt-1">Design sync · 11:30</div>
                     </div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features Section */}
-      <section className="features-section py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything you need to manage your time
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Powerful features to help you stay organized and productive
+        {/* Features */}
+        <section className="features mt-20 px-5">
+          <div className="container mx-auto max-w-6xl">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((f, i) => {
+                const Icon = f.icon;
+                return (
+                  <div key={i} className="feature rounded-2xl p-5 bg-white/3 border border-white/6">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#06b6d4] mb-3">
+                      <Icon className="h-5 w-5 text-black/90" />
+                    </div>
+                    <div className="font-semibold mb-1">{f.title}</div>
+                    <div className="text-sm text-white/75">{f.description}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials / Trust (small) */}
+        <section className="mt-20 px-5">
+          <div className="container mx-auto max-w-4xl text-center">
+            <div className="inline-block px-3 py-1 rounded-full bg-white/6 mb-4">
+              Loved by teams
+            </div>
+            <h3 className="text-2xl font-[600] mb-3" style={{ fontFamily: "var(--ff-heading)" }}>
+              Loved by designers & PMs
+            </h3>
+            <p className="text-white/70 max-w-2xl mx-auto">
+              “Cut our meeting time in half — the assistant drafts agendas and finds better slots
+              automatically.”
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className="feature-card p-6 rounded-lg bg-card border border-border hover:border-primary transition-colors"
-                >
-                  <div className="mb-4 p-3 w-fit rounded-lg bg-primary/10">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="rounded-2xl bg-gradient-to-r from-primary to-accent p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to transform your scheduling?
-            </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Join thousands of users who are already saving time with Smart Calendar
-            </p>
+        </section>
 
+        {/* Final CTA */}
+        <section className="mt-16 px-5">
+          <div className="container mx-auto max-w-4xl text-center">
+            <div className="rounded-3xl p-8 bg-gradient-to-r from-[#7c3aed] to-[#06b6d4] shadow-2xl">
+              <h3 className="text-2xl font-[700] mb-3">Make your calendar actually useful</h3>
+              <p className="text-white/90 mb-6">Try Smart Calendar free — cancel anytime.</p>
+              <Button size="lg" onClick={() => router.push("/signup")}>
+                Get started — it’s free
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
-      <footer className="border-t border-border py-8 px-4">
-        <div className="container mx-auto max-w-6xl text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Smart Calendar. All rights reserved.</p>
+        </section>
+      </main>
+
+      <footer className="py-8 border-t border-white/6 text-center text-white/60">
+        <div className="container mx-auto max-w-6xl px-5">
+          <div>
+            &copy; {new Date().getFullYear()} Smart Calendar — friendly scheduling for busy people.
+          </div>
         </div>
       </footer>
     </div>
